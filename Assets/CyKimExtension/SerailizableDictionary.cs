@@ -4,8 +4,6 @@ using UnityEngine;
 
 [Serializable]
 public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
-    where TKey : Enum
-    where TValue : UnityEngine.Object
 {
     [SerializeField]
     private List<KeyValuePair> keyValuePairs = new();
