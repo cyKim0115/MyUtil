@@ -1,9 +1,10 @@
+#if UNITY_EDITOR
 using System.Reflection;
-using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEditor;
 
 [CustomPropertyDrawer(typeof(ShowIfAttribute), true)]
 public class ShowIfAttributeDrawer : PropertyDrawer
@@ -148,3 +149,4 @@ public class ShowIfAttributeDrawer : PropertyDrawer
 
     }
 }
+#endif
