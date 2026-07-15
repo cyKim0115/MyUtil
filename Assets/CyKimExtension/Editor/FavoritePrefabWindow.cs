@@ -4,17 +4,25 @@ using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 using UnityEngine.UIElements;
 using System.Linq;
+using System;
 
 public class FavoritePrefabWindow : EditorWindow
 {
     private List<GameObject> prefabs;
     private VisualElement prefabListContainer;
+    private static DateTime clickTime;
+    private static bool anyChanged;
     private const string EditorPrefsKey = "FavoritePrefabWindow_PrefabGUIDs";
 
-    [MenuItem("Tools/Favorite Prefab")]
+#if UNITY_EDITOR_OSX
+    [MenuItem("Tools/Prefab/Favorite Prefab %#f")]
+#else
+    [MenuItem("Tools/Prefab/Favorite Prefab %#f")]
+#endif
     public static void ShowWindow()
     {
-        GetWindow<FavoritePrefabWindow>("Favorite Prefab");
+        var window = GetWindow<FavoritePrefabWindow>("Favorite Prefab");
+        window.titleContent = new GUIContent("Favorite Prefab", EditorGUIUtility.IconContent("Favorite Icon").image);
     }
 
     private void OnEnable()
@@ -99,6 +107,8 @@ public class FavoritePrefabWindow : EditorWindow
         {
             style = { flexGrow = 1, color = Color.white }
         };
+        var dragManipulator = new DragManipulator(element, prefabListContainer, prefabs, prefab, this);
+        element.AddManipulator(dragManipulator);
         element.Add(nameLabel);
 
         // 편집 버튼
@@ -120,13 +130,10 @@ public class FavoritePrefabWindow : EditorWindow
             SavePrefabList();
         })
         {
-            text = "삭제",
-            style = { width = 60 },
+            text = "X",
+            style = { width = 20 },
         };
         element.Add(deleteButton);
-
-        // 드래그 앤 드롭으로 순서 변경
-        element.AddManipulator(new DragManipulator(element, prefabListContainer, prefabs, prefab, this));
 
         prefabListContainer.Add(element);
     }
@@ -202,7 +209,7 @@ public class FavoritePrefabWindow : EditorWindow
         private List<GameObject> prefabs;
         private GameObject prefab;
         private FavoritePrefabWindow window;
-        private bool isDragging;
+        public bool isDragging;
 
         public DragManipulator(VisualElement element, VisualElement container, List<GameObject> prefabs, GameObject prefab, FavoritePrefabWindow window)
         {
@@ -234,6 +241,9 @@ public class FavoritePrefabWindow : EditorWindow
                 isDragging = true;
                 target.CaptureMouse();
                 evt.StopPropagation();
+
+                clickTime = DateTime.Now;
+                anyChanged = false;
             }
         }
 
@@ -261,6 +271,7 @@ public class FavoritePrefabWindow : EditorWindow
                 prefabs.Remove(prefab);
                 prefabs.Insert(newIndex, prefab);
                 window.SavePrefabList();
+                anyChanged = true;
             }
 
             evt.StopPropagation();
@@ -273,7 +284,20 @@ public class FavoritePrefabWindow : EditorWindow
                 isDragging = false;
                 target.ReleaseMouse();
                 evt.StopPropagation();
+
+                CheckAndPingPrefab();
             }
+        }
+
+        private void CheckAndPingPrefab()
+        {
+            if (DateTime.Now - clickTime < TimeSpan.FromSeconds(0.2f) && !anyChanged)
+            {
+                Selection.activeObject = prefab;
+                EditorGUIUtility.PingObject(prefab);
+            }
+
+            anyChanged = false;
         }
     }
 }

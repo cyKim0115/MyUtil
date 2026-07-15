@@ -1,4 +1,4 @@
-#if UNITY_EDITOR_OSX
+// #if UNITY_EDITOR_OSX
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -143,4 +143,4 @@ namespace cyKimUnityExtensions
         }
     }
 }
-#endif
+// #endif

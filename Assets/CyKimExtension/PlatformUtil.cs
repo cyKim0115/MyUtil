@@ -1,7 +1,3 @@
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable HeuristicUnreachableCode
-#pragma warning disable CS0162 // 접근할 수 없는 코드가 있습니다.
-
 namespace Util
 {
     public static class PlatformUtil
@@ -10,16 +6,18 @@ namespace Util
         {
 #if UNITY_EDITOR
             return true;
-#endif
+#else
             return false;
+#endif
         }
 
         public static bool IsDev()
         {
 #if DEV
             return true;
-#endif
+#else
             return false;
+#endif
         }
 
         public static bool IsDevOrEditor()
@@ -31,8 +29,22 @@ namespace Util
         {
 #if MARKET_BUILD
             return true;
-#endif
+#else
             return false;
+#endif
+        }
+
+        public static string GetPlatformType()
+        {
+#if UNITY_EDITOR
+            return "Editor";
+#elif UNITY_IOS || UNITY_IPHONE
+            return "iOS";
+#elif UNITY_ANDROID
+            return "Android";
+#else
+            return $"Unknown ({UnityEngine.Application.platform})";
+#endif
         }
     }
 }

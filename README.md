@@ -14,132 +14,133 @@ Unity 개발을 위한 유틸리티 및 확장 기능 모음입니다.
 Transform의 자식 객체를 탐색하는 확장 메서드를 제공합니다.
 
 ```csharp
-// 이름으로 자식 찾기 (재귀적 탐색)
 Transform child = parent.FindChildByName("TargetName");
-
-// 모든 자식 Transform을 리스트로 수집
 List<Transform> allChildren = new List<Transform>();
 parent.GetTransformIncludeAllChild(ref allChildren);
 ```
 
 #### PlatformUtil
-플랫폼 및 빌드 타입을 확인하는 유틸리티입니다.
+플랫폼 및 빌드 타입을 확인합니다.
 
 ```csharp
-if (PlatformUtil.IsEditor()) { /* 에디터 환경 */ }
-if (PlatformUtil.IsDev()) { /* 개발 빌드 */ }
-if (PlatformUtil.IsReal()) { /* 마켓 빌드 */ }
+if (PlatformUtil.IsEditor()) { /* 에디터 */ }
+if (PlatformUtil.IsDev()) { /* DEV 빌드 */ }
+if (PlatformUtil.IsReal()) { /* MARKET_BUILD */ }
+string platform = PlatformUtil.GetPlatformType(); // Editor / iOS / Android
+```
+
+#### Util
+숫자 단위 포맷, 시간 포맷, 확률 시뮬레이션을 제공합니다.
+
+```csharp
+string text = 1500f.FormatWithUnits(); // "1.5a"
+double value = "1.5a".GetUnitValue();
+string time = 3661L.FormatTime(); // "1h 1m"
+bool hit = 30f.ProbabilitySimulate_Percent();
+```
+
+#### LanguageUtil
+PlayerPrefs 기반 언어 코드를 저장/로드합니다.
+
+#### GameStateUtil
+플레이 모드 종료/앱 종료 중 안전 접근 여부를 확인합니다.
+
+```csharp
+if (GameStateUtil.IsSafeToAccess) { /* 안전한 접근 */ }
 ```
 
 #### UILayoutUtil
-UI 레이아웃을 하위부터 순차적으로 리빌드하는 유틸리티입니다.
+UI 레이아웃을 하위부터 순차적으로 리빌드합니다.
 
 ```csharp
-// LayoutGroup과 ContentSizeFitter를 하위부터 순차적으로 리빌드
 transform.RebuildLayoutsFromBottom();
 ```
+
+#### ProgressBarUtil / ScrollRectUtil
+Image fillAmount / ScrollRect 정규화 위치 애니메이션 (LitMotion + UniTask).
+
+```csharp
+img.SetProgressWithAnimation(0.8f, 0.5f);
+await scrollRect.ScrollToBottomAsync(0.3f, token);
+```
+
 
 ### 🎨 커스텀 속성 (Attributes)
 
 #### ReadOnlyProperty
-Inspector에서 필드를 읽기 전용으로 만드는 속성입니다.
-
-```csharp
-[ReadOnlyProperty] // 에디터에서만 읽기 전용
-public int editorOnlyReadOnly;
-
-[ReadOnlyProperty(true)] // 런타임에서만 읽기 전용
-public int runtimeOnlyReadOnly;
-```
+Inspector에서 필드를 읽기 전용으로 만듭니다.
 
 #### ShowIfAttribute
-조건에 따라 필드를 표시하거나 비활성화하는 속성입니다.
-
-```csharp
-public bool showField;
-
-[ShowIf(ActionOnConditionFail.DontDraw, ConditionOperator.And, nameof(showField))]
-public int conditionalField;
-
-[ShowIf(ActionOnConditionFail.JustDisable, ConditionOperator.Or, "condition1", "condition2")]
-public string disabledField;
-```
+조건에 따라 필드를 표시하거나 비활성화합니다.
 
 ### 📦 데이터 구조
 
-#### SerializableDictionary
-Unity Inspector에서 직렬화 가능한 Dictionary입니다.
-
-```csharp
-[Serializable]
-public class MyClass : MonoBehaviour
-{
-    public SerializableDictionary<string, int> myDictionary;
-}
-```
-
-#### DoubleColor
-상단과 하단 색상을 가진 구조체입니다.
-
-```csharp
-public DoubleColor gradientColor = new DoubleColor(Color.white, Color.black);
-```
+- **SerializableDictionary**: Inspector 직렬화 가능한 Dictionary
+- **DoubleColor**: 상/하단 색상 구조체
+- **LabelDictionary**: 라벨이 있는 Dictionary (`label` 기본값 `-1`)
+- **ProbabilityDictionary**: 확률 Dictionary
 
 ### 🛠️ 에디터 도구
 
-- **DataPathUtil**: 데이터 경로 관련 유틸리티
-- **DoubleColorDrawer**: DoubleColor를 위한 커스텀 Property Drawer
-- **FavoritePrefabWindow**: 자주 사용하는 프리팹을 관리하는 윈도우
-- **FixResolutionScale**: 해상도 스케일 수정 도구
-- **PrefabEditModeShortcut**: 프리팹 편집 모드 단축키
-- **SerializableDictionaryDrawer**: SerializableDictionary를 위한 커스텀 Property Drawer
+| 메뉴 | 설명 |
+|------|------|
+| Tools/Prefab/Favorite Prefab | 즐겨찾기 프리팹 (`Ctrl/Cmd+Shift+F`) |
+| Tools/Prefab/Open Selected Prefab | 선택 프리팹 편집 (`Alt+E`) |
+| Tools/Prefab/Remove Missing Scripts | Missing Script 제거 |
+| Tools/Prefab/Random Prefab Scatter | 씬 오브젝트 위치에 랜덤 프리팹 배치 |
+| GameObject/Custom Create GameObject | Empty/UI 생성 (`Ctrl/Cmd+Shift+N`) |
+| Tools/Data/Data Path Open | persistentDataPath 탐색기 열기 |
+| **F12** (Inspector Component Shortcut) | 선택 객체가 TMP면 텍스트 입력 포커스, Image면 Source Image 선택 창 |
 
 ## 📦 요구사항
 
 - Unity 2022.3 이상
-- Universal Render Pipeline (URP)
-- Input System 패키지
+- URP, Input System, TextMeshPro (`com.unity.ugui`)
+
+### 외부 패키지
+
+`Window > Package Manager > + > Add package from git URL…`
+
+#### LitMotion
+- https://github.com/AnnulusGames/LitMotion
+```text
+https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotion
+```
+
+#### UniTask
+- https://github.com/Cysharp/UniTask
+```text
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
+```
+
+#### Cursor IDE Support
+- https://github.com/boxqkrtm/com.unity.ide.cursor
+```text
+https://github.com/boxqkrtm/com.unity.ide.cursor.git
+```
+
+#### Unity MCP
+- https://github.com/CoplayDev/unity-mcp
+```text
+https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main
+```
+
+#### NuGetForUnity
+- https://github.com/GlitchEnzo/NuGetForUnity
+```text
+https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity
+```
+
+#### MemoryPack
+- https://github.com/Cysharp/MemoryPack
+1. 위 NuGetForUnity 설치
+2. `NuGet > Manage NuGet Packages`에서 `MemoryPack` 검색 후 설치
 
 ## 🚀 설치 방법
 
-1. 이 저장소를 클론하거나 다운로드합니다.
-2. Unity 프로젝트의 `Assets` 폴더에 `CyKimExtension` 폴더를 복사합니다.
-3. Unity 에디터에서 프로젝트를 열면 자동으로 컴파일됩니다.
-
-## 📝 사용 예제
-
-### 자식 객체 찾기
-```csharp
-using cyKimUnityExtensions.UnityEngine;
-
-// 특정 이름의 자식을 찾기
-Transform target = transform.FindChildByName("Player");
-
-// 재귀 깊이 제한 (최대 3단계)
-Transform limited = transform.FindChildByName("Item", 3);
-```
-
-### 조건부 필드 표시
-```csharp
-public class MyComponent : MonoBehaviour
-{
-    public bool useAdvancedSettings;
-    
-    [ShowIf(ActionOnConditionFail.DontDraw, ConditionOperator.And, nameof(useAdvancedSettings))]
-    public float advancedValue;
-    
-    [ReadOnlyProperty(true)]
-    public int runtimeValue;
-}
-```
-
-### UI 레이아웃 리빌드
-```csharp
-using cyKimUnityExtensions.UnityEngine.UI;
-
-// UI 레이아웃을 하위부터 순차적으로 리빌드
-canvasTransform.RebuildLayoutsFromBottom();
-```
+1. `CyKimExtension` 폴더를 Unity 프로젝트 `Assets`에 복사
+2. 필요 패키지를 위에 맞게 추가
+3. Unity에서 컴파일 확인
 
 ## 📄 라이선스
 

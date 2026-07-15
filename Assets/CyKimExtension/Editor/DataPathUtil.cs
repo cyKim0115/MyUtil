@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 public static class DataPathUtil
 {
-    [MenuItem("Tools/Data/Data Path Open")]
+    [MenuItem("Tools/Data/Data Path Open", false, 21)]
     private static void OpenDataPath()
     {
         string path = Application.persistentDataPath;
