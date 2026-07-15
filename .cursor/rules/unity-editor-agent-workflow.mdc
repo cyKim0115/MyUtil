@@ -1,0 +1,41 @@
+---
+description: Unity Editor 상시 오픈 전제 — AI 에이전트는 CLI batchmode 대신 Unity Skills / MCP 사용
+alwaysApply: true
+---
+
+# Unity Editor Agent Workflow
+
+## 전제
+
+- 사용자는 항상 **Unity Editor를 열어둔 채** 작업한다.
+- 에디터 자동화의 기본 경로는 **Unity Skills** 또는 **Unity MCP**다.
+
+## 금지: Unity CLI batchmode
+
+다음을 **실행하지 않는다**:
+
+- `Unity.exe -batchmode`
+- `-executeMethod`, `-quit`, `-nographics` 조합
+- 열린 Editor와 같은 프로젝트를 임시 복사본으로 돌려 batchmode 우회 시도
+
+이유: `Library/`, `Temp/`, `.meta` 잠금·경합, import 꼬임, 생성물 유실.
+
+batchmode가 유일한 수단처럼 보이면 **사용자에게 Editor에서 메뉴 실행을 요청**한다.
+
+## 대신 사용할 방법
+
+| 목적 | 방법 |
+|---|---|
+| Editor 메뉴·셋업 스크립트 실행 | Unity Skills / MCP `execute_menu_item` (`Tools/...`) |
+| 프리팹·에셋 생성 Editor 도구 | `[MenuItem("Tools/...")]` + 메뉴 실행 |
+| 컴파일·콘솔 확인 | Unity Skills / MCP console·debug 도구 |
+
+## Editor 도구 작성 규칙
+
+- 일회성 셋업도 `[MenuItem]` 진입점을 둔다. `-executeMethod` 전용 static 메서드만 두지 않는다.
+- 메뉴 경로는 `Tools/<Feature>/...` 관례를 따른다.
+
+## Unity Skills `*_batch` 와의 구분
+
+- `component_add_batch`, REST `/skills/batch` 등은 **API 배치 호출**이며 CLI batchmode와 무관하다.
+- 이 규칙이 금지하는 것은 **Unity 프로세스 `-batchmode` CLI 실행**뿐이다.

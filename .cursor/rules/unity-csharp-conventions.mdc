@@ -1,0 +1,37 @@
+---
+description: Unity C# 네이밍·직렬화·비동기 컨벤션 (CyKimExtension)
+globs: Assets/CyKimExtension/**/*.cs
+alwaysApply: false
+---
+
+# Unity C# Conventions
+
+## 네이밍
+
+- private field: `_camelCase`
+- private const: `UPPER_SNAKE_CASE`
+- public property/method: `PascalCase`
+- local variable/parameter: `camelCase`
+
+## UI 필드 접두사 (에디터·런타임 UI 스크립트)
+
+- `go`, `img`, `txt`, `tr`, `rt`
+
+## 직렬화·파일 구조
+
+- `[SerializeField] private` 사용 (public 필드는 필요한 경우만)
+- MonoBehaviour는 파일당 하나
+
+## 비동기 / 연출
+
+- `Task` 대신 `UniTask` 사용
+- fire-and-forget은 `.Forget()` 또는 `UniTaskVoid`
+- 신규 연출은 `LitMotion` 우선
+
+## GetComponent
+
+- `GetComponent`보다 `TryGetComponent` 우선
+
+## 로그
+
+- 경고/오류는 `[ClassName]` 접두어와 함께 `Debug.LogWarning` / `Debug.LogError`

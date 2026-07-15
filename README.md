@@ -142,6 +142,15 @@ https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity
 2. 필요 패키지를 위에 맞게 추가
 3. Unity에서 컴파일 확인
 
+## 🤖 Cursor Rules / Skills
+
+Agent용 프로젝트 규칙·스킬은 `.cursor/`에 있습니다 (게임 도메인 전용 자산은 제외).
+
+| 경로 | 내용 |
+|------|------|
+| `.cursor/rules/` | `.meta` 금지, Editor batchmode 금지, 한국어 커밋, C# 컨벤션, 라이브러리 개요 |
+| `.cursor/skills/project-workflows/` | 한국어 커밋 초안, 에디터 도구 문서 작성 |
+
 ## 📄 라이선스
 
 이 프로젝트는 개인 사용 목적으로 제작되었습니다.

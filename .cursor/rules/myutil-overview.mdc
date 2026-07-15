@@ -1,0 +1,18 @@
+---
+description: MyUtil / CyKimExtension 라이브러리 범위와 작업 원칙
+alwaysApply: true
+---
+
+# MyUtil Overview
+
+## 범위
+
+- 이 저장소는 **게임 도메인이 아닌** 개인 Unity 유틸·에디터 편의 라이브러리다.
+- 런타임/에디터 코드의 주 위치: `Assets/CyKimExtension/`
+
+## 작업 원칙
+
+- 게임 전용 아키텍처·도메인 로직을 넣지 않는다.
+- 에디터 도구는 `[MenuItem("Tools/...")]` 진입점을 둔다.
+- `.meta`는 만들지 않는다 (`.cursor/rules/unity-assets.mdc`).
+- Editor 자동화는 CLI batchmode 대신 Unity Skills / MCP (`.cursor/rules/unity-editor-agent-workflow.mdc`).
