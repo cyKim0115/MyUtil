@@ -13,6 +13,7 @@ alwaysApply: true
 ## 작업 원칙
 
 - 게임 전용 아키텍처·도메인 로직을 넣지 않는다.
-- 에디터 도구는 `[MenuItem("Tools/...")]` 진입점을 둔다.
+- 사용자가 자주 쓰는 에디터 도구는 활성 `[MenuItem("Tools/...")]` 진입점을 둔다.
+- Agent 전용 일회성 도구는 MenuItem validate `false` + MCP `execute_code` (`.cursor/rules/unity-agent-editor-tools.mdc`).
 - `.meta`는 만들지 않는다 (`.cursor/rules/unity-assets.mdc`).
 - Editor 자동화는 CLI batchmode 대신 Unity Skills / MCP (`.cursor/rules/unity-editor-agent-workflow.mdc`).

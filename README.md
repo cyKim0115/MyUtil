@@ -144,12 +144,12 @@ https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity
 
 ## 🤖 Cursor Rules / Skills
 
-Agent용 프로젝트 규칙·스킬은 `.cursor/`에 있습니다 (게임 도메인 전용 자산은 제외).
+Agent용 프로젝트 규칙·스킬은 `.cursor/`에 있습니다 (게임 도메인·Blender 전용 자산은 제외).
 
 | 경로 | 내용 |
 |------|------|
-| `.cursor/rules/` | `.meta` 금지, Editor batchmode 금지, 한국어 커밋, C# 컨벤션, 라이브러리 개요 |
-| `.cursor/skills/project-workflows/` | 한국어 커밋 초안, 에디터 도구 문서 작성 |
+| `.cursor/rules/` | `.meta` 금지, Editor batchmode 금지, Agent 전용 MenuItem, 한국어 커밋, C# 컨벤션, 라이브러리 개요 |
+| `.cursor/skills/project-workflows/` | 한국어 커밋, 에디터 도구 문서, Agent 전용 Editor 도구 |
 
 ## 📄 라이선스
 

@@ -26,14 +26,16 @@ batchmode가 유일한 수단처럼 보이면 **사용자에게 Editor에서 메
 
 | 목적 | 방법 |
 |---|---|
-| Editor 메뉴·셋업 스크립트 실행 | Unity Skills / MCP `execute_menu_item` (`Tools/...`) |
-| 프리팹·에셋 생성 Editor 도구 | `[MenuItem("Tools/...")]` + 메뉴 실행 |
+| 사용자용 활성 Editor 메뉴 실행 | Unity Skills / MCP `execute_menu_item` (`menuPath="Tools/..."`) |
+| Agent 전용·일회성 셋업/최적화 | `public static` 메서드를 MCP `execute_code`로 직접 호출 |
 | 컴파일·콘솔 확인 | Unity Skills / MCP console·debug 도구 |
 
 ## Editor 도구 작성 규칙
 
-- 일회성 셋업도 `[MenuItem]` 진입점을 둔다. `-executeMethod` 전용 static 메서드만 두지 않는다.
-- 메뉴 경로는 `Tools/<Feature>/...` 관례를 따른다.
+- `-executeMethod` / CLI batchmode 전용 진입점만 두지 않는다. Editor 안에서 호출 가능한 `public static`을 둔다.
+- **사용자가 자주 쓰는 도구**: 활성 `[MenuItem("Tools/...")]` 유지.
+- **Agent가 가끔 쓰는 일회성/재생성 도구**: MenuItem validate가 `false`를 반환해 **메뉴 비활성**. 호출은 `execute_code` + `Type.Method()`.
+- 상세: `.cursor/rules/unity-agent-editor-tools.mdc`, 스킬 `project-workflows/agent-editor-tools`.
 
 ## Unity Skills `*_batch` 와의 구분
 

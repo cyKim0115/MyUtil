@@ -1,0 +1,38 @@
+---
+description: Agent 전용 Unity Editor 도구 — MenuItem 비활성 + static 진입점 호출
+alwaysApply: true
+---
+
+# Unity Agent Editor Tools
+
+AI/에이전트가 가끔 쓰는 일회성·재생성 Editor 도구는 **메뉴에 노출하지 않는다**.  
+기능은 `public static` 메서드로 두고, Agent는 MCP `execute_code`로 직접 호출한다.
+
+## 작성 규칙
+
+1. `public static void DoSomething()` 진입점을 둔다.
+2. `[MenuItem("Tools/...")]` 은 남겨도 되지만, 반드시 **validate MenuItem이 `false`를 반환**해 비활성한다.
+3. validate 옆 주석: `Agent 전용 ... 사용자 Tools 메뉴에서는 비활성.`
+4. 사용자가 자주 쓰는 창/워크플로 도구는 활성 MenuItem을 유지한다.
+
+```csharp
+private const string MenuPath = "Tools/Feature/Agent Only Action";
+
+[MenuItem(MenuPath)]
+public static void Run() { /* ... */ }
+
+[MenuItem(MenuPath, true)]
+private static bool ValidateRun() => false; // Agent 전용
+```
+
+## Agent 실행 방법
+
+- ❌ 비활성 메뉴에 `execute_menu_item` 의존하지 않는다.
+- ✅ `TypeName.MethodName();` 처럼 **타입.메서드**를 MCP `execute_code`로 호출한다.
+
+## 활성 MenuItem을 유지하는 경우
+
+- 에디터 윈도우 (`Favorite Prefab`, `Remove Missing Scripts` 등)
+- 일상 단축키/워크플로 (`Prefab Open`, `Custom Create GameObject` 등)
+
+상세 워크플로는 `project-workflows/agent-editor-tools` 스킬을 따른다.
