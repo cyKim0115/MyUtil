@@ -17,3 +17,4 @@ alwaysApply: true
 - Agent 전용 일회성 도구는 MenuItem validate `false` + MCP `execute_code` (`.cursor/rules/unity-agent-editor-tools.mdc`).
 - `.meta`는 만들지 않는다 (`.cursor/rules/unity-assets.mdc`).
 - Editor 자동화는 CLI batchmode 대신 Unity Skills / MCP (`.cursor/rules/unity-editor-agent-workflow.mdc`).
+- 다른 Unity 프로젝트에서 범용 자산 가져오기 → 스킬 `project-workflows/sync-from-source` (`최신화`, 경로는 루트 `.env`).

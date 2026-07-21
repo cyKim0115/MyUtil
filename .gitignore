@@ -10,3 +10,9 @@ My Util.sln
 Assets/.DS_Store
 Assets/CyKimExtension/.DS_Store
 *.DS_Store
+
+# Local sync / secrets — never commit
+.env
+.env.local
+*.env
+!.env.example
