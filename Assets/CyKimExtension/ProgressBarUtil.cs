@@ -9,26 +9,26 @@ namespace Util
 {
     public static class ProgressBarUtil
     {
-        private static readonly Dictionary<int, MotionHandle> _dicTween = new();
+        private static readonly Dictionary<EntityId, MotionHandle> _dicTween = new();
 
         private static void AddTween(MonoBehaviour monoBehaviour, MotionHandle handle)
         {
-            int instanceId = monoBehaviour.GetInstanceID();
+            var entityId = monoBehaviour.GetEntityId();
 
-            if (!_dicTween.TryAdd(instanceId, handle))
+            if (!_dicTween.TryAdd(entityId, handle))
             {
-                Debug.LogError($"ProgressBarUtil : 해당 instance({instanceId}, {monoBehaviour.name})의 Tween이 이미 추가되어 있음.");
+                Debug.LogError($"ProgressBarUtil : 해당 instance({entityId}, {monoBehaviour.name})의 Tween이 이미 추가되어 있음.");
             }
         }
 
         private static void CancelTween(MonoBehaviour monoBehaviour)
         {
-            int instanceId = monoBehaviour.GetInstanceID();
+            var entityId = monoBehaviour.GetEntityId();
 
-            if (_dicTween.TryGetValue(instanceId, out var handle))
+            if (_dicTween.TryGetValue(entityId, out var handle))
             {
                 handle.TryCancel();
-                _dicTween.Remove(instanceId);
+                _dicTween.Remove(entityId);
             }
         }
 
@@ -117,7 +117,7 @@ namespace Util
             }
             finally
             {
-                _dicTween.Remove(img.GetInstanceID());
+                _dicTween.Remove(img.GetEntityId());
             }
         }
     }

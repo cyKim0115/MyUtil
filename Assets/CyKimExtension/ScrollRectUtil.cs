@@ -9,26 +9,26 @@ namespace Util
 {
     public static class ScrollRectUtil
     {
-        private static readonly Dictionary<int, MotionHandle> _dicTween = new();
+        private static readonly Dictionary<EntityId, MotionHandle> _dicTween = new();
 
         private static void AddTween(ScrollRect scrollRect, MotionHandle handle)
         {
-            int instanceId = scrollRect.GetInstanceID();
+            var entityId = scrollRect.GetEntityId();
 
-            if (!_dicTween.TryAdd(instanceId, handle))
+            if (!_dicTween.TryAdd(entityId, handle))
             {
-                Debug.LogError($"ScrollRectUtil : 해당 instance({instanceId}, {scrollRect.name})의 Tween이 이미 추가되어 있음.");
+                Debug.LogError($"ScrollRectUtil : 해당 instance({entityId}, {scrollRect.name})의 Tween이 이미 추가되어 있음.");
             }
         }
 
         private static void CancelTween(ScrollRect scrollRect)
         {
-            int instanceId = scrollRect.GetInstanceID();
+            var entityId = scrollRect.GetEntityId();
 
-            if (_dicTween.TryGetValue(instanceId, out var handle))
+            if (_dicTween.TryGetValue(entityId, out var handle))
             {
                 handle.TryCancel();
-                _dicTween.Remove(instanceId);
+                _dicTween.Remove(entityId);
             }
         }
 
@@ -64,7 +64,7 @@ namespace Util
             }
             finally
             {
-                _dicTween.Remove(scrollRect.GetInstanceID());
+                _dicTween.Remove(scrollRect.GetEntityId());
             }
         }
 

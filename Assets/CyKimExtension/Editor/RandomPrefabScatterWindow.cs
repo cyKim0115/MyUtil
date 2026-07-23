@@ -13,7 +13,7 @@ public class RandomPrefabScatterWindow : EditorWindow
 
     readonly List<GameObject> prefabs = new List<GameObject>();
     readonly List<GameObject> sceneObjects = new List<GameObject>();
-    readonly HashSet<int> sceneObjectIds = new HashSet<int>();
+    readonly HashSet<EntityId> sceneObjectIds = new HashSet<EntityId>();
 
     Vector2 prefabScroll;
     Vector2 sceneScroll;
@@ -307,7 +307,7 @@ public class RandomPrefabScatterWindow : EditorWindow
                 continue;
 
             var go = (GameObject)obj;
-            if (!sceneObjectIds.Add(go.GetInstanceID()))
+            if (!sceneObjectIds.Add(go.GetEntityId()))
                 continue;
 
             sceneObjects.Add(go);
@@ -339,7 +339,7 @@ public class RandomPrefabScatterWindow : EditorWindow
 
     void RemoveSceneObjectAt(int index)
     {
-        sceneObjectIds.Remove(sceneObjects[index].GetInstanceID());
+        sceneObjectIds.Remove(sceneObjects[index].GetEntityId());
         sceneObjects.RemoveAt(index);
     }
 
