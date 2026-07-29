@@ -52,3 +52,9 @@ alwaysApply: false
 
 - `Animator.StringToHash` 대신 문자열 오버로드를 사용한다.
 - Animator 파라미터명은 호출부 문자열 리터럴로 명시하고 별도 해시 상수로 빼지 않는다.
+
+## 성능
+
+- `FindObjectOfType` 사용 금지 → `ManagerBase.Instance` 등 싱글톤 사용
+- 리플렉션 사용 금지
+- Update에서 무거운 연산 금지
