@@ -12,7 +12,7 @@ Use this skill when creating or updating documentation for a Unity editor tool i
 
 - Save docs under `Doc/{도구이름}/`
 - Use `{도구이름}Window.md` or `{도구이름}.md`
-- Keep screenshots in the same folder
+- Keep screenshots in the same folder, typically `{도구이름} 사진.png`
 
 ## Document structure
 
@@ -24,9 +24,10 @@ Use this skill when creating or updating documentation for a Unity editor tool i
 6. 주요 기능
 7. 사용 시나리오
 8. 내부 동작 원리
-9. 주의사항
-10. 관련 파일
-11. 버전 히스토리
+9. 데이터 구조
+10. 주의사항
+11. 관련 파일
+12. 버전 히스토리
 
 ## Writing rules
 
