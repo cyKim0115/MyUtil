@@ -84,7 +84,7 @@ Inspector에서 필드를 읽기 전용으로 만듭니다.
 
 | 메뉴 | 설명 |
 |------|------|
-| Tools/Prefab/Favorite Prefab | 즐겨찾기 프리팹 다중 세트 (`Ctrl/Cmd+Shift+F`) |
+| Tools/Prefab/Favorite Prefab | 즐겨찾기 프리팹 다중 세트·드래그 재정렬 (`Ctrl/Cmd+Shift+F`) |
 | Tools/Prefab/Open Selected Prefab | 선택 프리팹 편집 (`Alt+E`) |
 | Tools/Prefab/Remove Missing Scripts | Missing Script 제거 |
 | Tools/Prefab/Random Prefab Scatter | 씬 오브젝트 위치에 랜덤 프리팹 배치 |

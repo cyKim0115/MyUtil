@@ -22,9 +22,6 @@ public class FavoritePrefabWindow : EditorWindow
     private bool _suppressSetChange;
     private bool _isRenaming;
 
-    private static DateTime _clickTime;
-    private static bool _anyChanged;
-
 #if UNITY_EDITOR_OSX
     [MenuItem("Tools/Prefab/Favorite Prefab %#f")]
 #else
@@ -156,6 +153,8 @@ public class FavoritePrefabWindow : EditorWindow
         });
         toolbar.Add(_renameField);
 
+        toolbar.Add(MakeToolbarButton("◀", () => MoveActiveSet(-1)));
+        toolbar.Add(MakeToolbarButton("▶", () => MoveActiveSet(1)));
         toolbar.Add(MakeToolbarButton("새 세트", CreateNewSet));
         toolbar.Add(MakeToolbarButton("이름", BeginRename));
         toolbar.Add(MakeToolbarButton("복제", DuplicateActiveSet));
@@ -228,14 +227,10 @@ public class FavoritePrefabWindow : EditorWindow
         _setChipRow.Clear();
         foreach (var set in _store.sets)
         {
-            var isActive = set.id == _store.activeSetId;
-            var chip = new Button(() =>
-            {
-                if (set.id != _store.activeSetId)
-                {
-                    SwitchToSet(set.id);
-                }
-            })
+            var setId = set.id;
+            var isActive = setId == _store.activeSetId;
+            // Click is handled by ReorderManipulator (PointerDown is captured for drag).
+            var chip = new Button(() => { })
             {
                 text = set.name,
                 style =
@@ -248,7 +243,71 @@ public class FavoritePrefabWindow : EditorWindow
                     color = Color.white,
                 }
             };
+            chip.tooltip = "클릭: 전환 / 드래그: 세트 순서 변경";
+            chip.AddManipulator(new ReorderManipulator(
+                chip,
+                _setChipRow,
+                ReorderAxis.Horizontal,
+                MoveSet,
+                OnSetReorderFinished,
+                onClick: () =>
+                {
+                    if (setId != _store.activeSetId)
+                    {
+                        SwitchToSet(setId);
+                    }
+                }));
             _setChipRow.Add(chip);
+        }
+    }
+
+    private void OnSetReorderFinished()
+    {
+        SaveStore();
+        // Defer rebuild so PointerUp can finish on the dragged chip.
+        _setChipRow?.schedule.Execute(RefreshSetUi).ExecuteLater(1);
+    }
+
+    private void MoveActiveSet(int delta)
+    {
+        var active = GetActiveSet();
+        if (active == null)
+        {
+            return;
+        }
+
+        var index = _store.sets.FindIndex(s => s.id == active.id);
+        var target = index + delta;
+        if (index < 0 || target < 0 || target >= _store.sets.Count)
+        {
+            return;
+        }
+
+        MoveSet(index, target);
+        SaveStore();
+        RefreshSetUi();
+    }
+
+    private void MoveSet(int fromIndex, int toIndex)
+    {
+        if (fromIndex == toIndex
+            || fromIndex < 0 || toIndex < 0
+            || fromIndex >= _store.sets.Count || toIndex >= _store.sets.Count)
+        {
+            return;
+        }
+
+        var item = _store.sets[fromIndex];
+        _store.sets.RemoveAt(fromIndex);
+        _store.sets.Insert(toIndex, item);
+
+        if (_setChipRow != null
+            && fromIndex < _setChipRow.childCount
+            && toIndex < _setChipRow.childCount)
+        {
+            var element = _setChipRow[fromIndex];
+            _setChipRow.RemoveAt(fromIndex);
+            _setChipRow.Insert(toIndex, element);
         }
     }
 
@@ -464,6 +523,21 @@ public class FavoritePrefabWindow : EditorWindow
                 backgroundColor = new Color(0.15f, 0.15f, 0.15f)
             }
         };
+        element.userData = prefab;
+
+        var dragHandle = new Label("≡")
+        {
+            style =
+            {
+                width = 18,
+                marginRight = 4,
+                color = new Color(0.7f, 0.7f, 0.7f),
+                unityTextAlign = TextAnchor.MiddleCenter,
+                unityFontStyleAndWeight = FontStyle.Bold,
+            },
+            tooltip = "행을 드래그하여 순서 변경"
+        };
+        element.Add(dragHandle);
 
         var icon = new Image
         {
@@ -476,7 +550,6 @@ public class FavoritePrefabWindow : EditorWindow
         {
             style = { flexGrow = 1, color = Color.white }
         };
-        element.AddManipulator(new DragManipulator(element, _prefabListContainer, _prefabs, prefab, this));
         element.Add(nameLabel);
 
         var editButton = new Button(() =>
@@ -502,7 +575,47 @@ public class FavoritePrefabWindow : EditorWindow
         };
         element.Add(deleteButton);
 
+        // Attach to the row so live reordering follows the pointer across siblings.
+        element.AddManipulator(new ReorderManipulator(
+            element,
+            _prefabListContainer,
+            ReorderAxis.Vertical,
+            MovePrefab,
+            OnPrefabReorderFinished,
+            onClick: () =>
+            {
+                Selection.activeObject = prefab;
+                EditorGUIUtility.PingObject(prefab);
+            },
+            ignoreButtons: true));
+
         _prefabListContainer.Add(element);
+    }
+
+    private void OnPrefabReorderFinished()
+    {
+        PersistActiveSetAndSave();
+    }
+
+    private void MovePrefab(int fromIndex, int toIndex)
+    {
+        if (fromIndex == toIndex
+            || fromIndex < 0 || toIndex < 0
+            || fromIndex >= _prefabs.Count || toIndex >= _prefabs.Count
+            || _prefabListContainer == null
+            || fromIndex >= _prefabListContainer.childCount
+            || toIndex >= _prefabListContainer.childCount)
+        {
+            return;
+        }
+
+        var prefab = _prefabs[fromIndex];
+        _prefabs.RemoveAt(fromIndex);
+        _prefabs.Insert(toIndex, prefab);
+
+        var element = _prefabListContainer[fromIndex];
+        _prefabListContainer.RemoveAt(fromIndex);
+        _prefabListContainer.Insert(toIndex, element);
     }
 
     private void RefreshPrefabListUI()
@@ -707,110 +820,240 @@ public class FavoritePrefabWindow : EditorWindow
         public string[] guids;
     }
 
-    private class DragManipulator : Manipulator
+    private enum ReorderAxis
     {
-        private readonly VisualElement _element;
-        private readonly VisualElement _container;
-        private readonly List<GameObject> _prefabs;
-        private readonly GameObject _prefab;
-        private readonly FavoritePrefabWindow _window;
-        private bool _isDragging;
+        Vertical,
+        Horizontal,
+    }
 
-        public DragManipulator(
-            VisualElement element,
+    /// <summary>
+    /// Drag-to-reorder with live sibling swaps when the pointer crosses midpoints.
+    /// </summary>
+    private class ReorderManipulator : Manipulator
+    {
+        private const float DragThresholdPx = 5f;
+        private static readonly Color DragHighlight = new Color(0.28f, 0.42f, 0.58f, 0.95f);
+
+        private readonly VisualElement _row;
+        private readonly VisualElement _container;
+        private readonly ReorderAxis _axis;
+        private readonly Action<int, int> _move;
+        private readonly Action _onDragFinished;
+        private readonly Action _onClick;
+        private readonly bool _ignoreButtons;
+
+        private bool _pointerDown;
+        private bool _dragging;
+        private int _pointerId;
+        private Vector2 _startPanelPos;
+        private bool _orderChanged;
+        private StyleColor _originalBackground;
+
+        public ReorderManipulator(
+            VisualElement row,
             VisualElement container,
-            List<GameObject> prefabs,
-            GameObject prefab,
-            FavoritePrefabWindow window)
+            ReorderAxis axis,
+            Action<int, int> move,
+            Action onDragFinished,
+            Action onClick = null,
+            bool ignoreButtons = false)
         {
-            _element = element;
+            _row = row;
             _container = container;
-            _prefabs = prefabs;
-            _prefab = prefab;
-            _window = window;
+            _axis = axis;
+            _move = move;
+            _onDragFinished = onDragFinished;
+            _onClick = onClick;
+            _ignoreButtons = ignoreButtons;
         }
 
         protected override void RegisterCallbacksOnTarget()
         {
-            target.RegisterCallback<MouseDownEvent>(OnMouseDown);
-            target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            target.RegisterCallback<MouseUpEvent>(OnMouseUp);
+            target.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
+            target.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            target.RegisterCallback<PointerUpEvent>(OnPointerUp);
+            target.RegisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
         }
 
         protected override void UnregisterCallbacksFromTarget()
         {
-            target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
-            target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
-            target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
+            target.UnregisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
+            target.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+            target.UnregisterCallback<PointerUpEvent>(OnPointerUp);
+            target.UnregisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
         }
 
-        private void OnMouseDown(MouseDownEvent evt)
+        private static bool IsFromButton(IEventHandler handler)
+        {
+            var ve = handler as VisualElement;
+            while (ve != null)
+            {
+                if (ve is Button)
+                {
+                    return true;
+                }
+
+                ve = ve.parent;
+            }
+
+            return false;
+        }
+
+        private void OnPointerDown(PointerDownEvent evt)
         {
             if (evt.button != 0)
             {
                 return;
             }
 
-            _isDragging = true;
-            target.CaptureMouse();
-            evt.StopPropagation();
-            _clickTime = DateTime.Now;
-            _anyChanged = false;
-        }
-
-        private void OnMouseMove(MouseMoveEvent evt)
-        {
-            if (!_isDragging)
+            if (_ignoreButtons && IsFromButton(evt.target))
             {
                 return;
             }
 
-            var pos = evt.mousePosition;
-            var newIndex = -1;
-            for (var i = 0; i < _container.childCount; i++)
+            _pointerDown = true;
+            _dragging = false;
+            _orderChanged = false;
+            _pointerId = evt.pointerId;
+            _startPanelPos = (Vector2)evt.position;
+            target.CapturePointer(_pointerId);
+            evt.StopPropagation();
+        }
+
+        private void OnPointerMove(PointerMoveEvent evt)
+        {
+            if (!_pointerDown || evt.pointerId != _pointerId)
             {
-                if (_container[i].worldBound.Contains(pos))
+                return;
+            }
+
+            var panelPos = (Vector2)evt.position;
+            if (!_dragging)
+            {
+                if ((panelPos - _startPanelPos).sqrMagnitude < DragThresholdPx * DragThresholdPx)
                 {
-                    newIndex = i;
-                    break;
+                    return;
+                }
+
+                _dragging = true;
+                _originalBackground = _row.style.backgroundColor;
+                _row.style.opacity = 0.85f;
+                _row.style.backgroundColor = DragHighlight;
+            }
+
+            // Keep swapping live while dragging so the drop slot is visible.
+            var fromIndex = _container.IndexOf(_row);
+            var hoverIndex = FindCrossedIndex(panelPos, fromIndex);
+            if (fromIndex >= 0 && hoverIndex >= 0 && hoverIndex != fromIndex)
+            {
+                _move(fromIndex, hoverIndex);
+                _orderChanged = true;
+            }
+
+            evt.StopPropagation();
+        }
+
+        private void OnPointerUp(PointerUpEvent evt)
+        {
+            if (!_pointerDown || evt.pointerId != _pointerId)
+            {
+                return;
+            }
+
+            var shouldClick = !_dragging && !_orderChanged;
+            FinishDrag();
+            if (shouldClick)
+            {
+                _onClick?.Invoke();
+            }
+
+            evt.StopPropagation();
+        }
+
+        private void OnPointerCaptureOut(PointerCaptureOutEvent evt)
+        {
+            if (_pointerDown)
+            {
+                FinishDrag();
+            }
+        }
+
+        private void FinishDrag()
+        {
+            _pointerDown = false;
+            if (_dragging)
+            {
+                _row.style.opacity = 1f;
+                _row.style.backgroundColor = _originalBackground;
+            }
+
+            if (target.HasPointerCapture(_pointerId))
+            {
+                target.ReleasePointer(_pointerId);
+            }
+
+            if (_orderChanged)
+            {
+                _onDragFinished?.Invoke();
+            }
+
+            _dragging = false;
+            _orderChanged = false;
+        }
+
+        /// <summary>
+        /// Swap at most one adjacent slot per move when the pointer crosses that sibling's midpoint.
+        /// </summary>
+        private int FindCrossedIndex(Vector2 panelPos, int fromIndex)
+        {
+            if (fromIndex < 0 || _container.childCount == 0)
+            {
+                return -1;
+            }
+
+            if (fromIndex > 0)
+            {
+                var prevBound = _container[fromIndex - 1].worldBound;
+                if (_axis == ReorderAxis.Vertical)
+                {
+                    var mid = prevBound.yMin + prevBound.height * 0.5f;
+                    if (panelPos.y < mid)
+                    {
+                        return fromIndex - 1;
+                    }
+                }
+                else
+                {
+                    var mid = prevBound.xMin + prevBound.width * 0.5f;
+                    if (panelPos.x < mid)
+                    {
+                        return fromIndex - 1;
+                    }
                 }
             }
 
-            if (newIndex >= 0 && newIndex < _container.childCount)
+            if (fromIndex < _container.childCount - 1)
             {
-                _container.Remove(_element);
-                _container.Insert(newIndex, _element);
-                _prefabs.Remove(_prefab);
-                _prefabs.Insert(newIndex, _prefab);
-                _window.PersistActiveSetAndSave();
-                _anyChanged = true;
+                var nextBound = _container[fromIndex + 1].worldBound;
+                if (_axis == ReorderAxis.Vertical)
+                {
+                    var mid = nextBound.yMin + nextBound.height * 0.5f;
+                    if (panelPos.y > mid)
+                    {
+                        return fromIndex + 1;
+                    }
+                }
+                else
+                {
+                    var mid = nextBound.xMin + nextBound.width * 0.5f;
+                    if (panelPos.x > mid)
+                    {
+                        return fromIndex + 1;
+                    }
+                }
             }
 
-            evt.StopPropagation();
-        }
-
-        private void OnMouseUp(MouseUpEvent evt)
-        {
-            if (!_isDragging)
-            {
-                return;
-            }
-
-            _isDragging = false;
-            target.ReleaseMouse();
-            evt.StopPropagation();
-            CheckAndPingPrefab();
-        }
-
-        private void CheckAndPingPrefab()
-        {
-            if (DateTime.Now - _clickTime < TimeSpan.FromSeconds(0.2f) && !_anyChanged)
-            {
-                Selection.activeObject = _prefab;
-                EditorGUIUtility.PingObject(_prefab);
-            }
-
-            _anyChanged = false;
+            return fromIndex;
         }
     }
 }
