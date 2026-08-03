@@ -49,6 +49,18 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Editor/RandomPrefabScatterWindow.cs` | `Editor/RandomPrefabScatterWindow.cs` |
 | `Editor/InspectorComponentShortcut.cs` | `Editor/InspectorComponentShortcut.cs` |
 
+### Extra tracked (relative to `SYNC_SOURCE_ROOT`, not util scripts root)
+
+| Source | Dest |
+|--------|------|
+| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedback.cs` | `Editor/Agent/Webhook/WebhookFeedback.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackSettings.cs` | `Editor/Agent/Webhook/WebhookFeedbackSettings.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackProvider.cs` | `Editor/Agent/Webhook/WebhookFeedbackProvider.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackJson.cs` | `Editor/Agent/Webhook/WebhookFeedbackJson.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` | `Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/DiscordWebhookTransport.cs` | `Editor/Agent/Webhook/DiscordWebhookTransport.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/SlackWebhookTransport.cs` | `Editor/Agent/Webhook/SlackWebhookTransport.cs` |
+
 Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, use `SYNC_SOURCE_EXTRA_DRAWER_REL` and sync into `Editor/SerializableDictionaryDrawer.cs`.
 
 ### Always skip (scripts)
@@ -59,6 +71,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `Editor/VoxelFloor*.cs`
 - `Editor/PrefabEditEnvironmentSetup.cs` (project scene paths)
 - `Editor/OneMobilePopFontAtlasSetup.cs` (project font path)
+- `Editor/Agent/DiscordFeedbackSender.cs` (source-only Discord 하위 호환 래퍼; MyUtil은 `WebhookFeedback`만 유지)
 - Anything under Blender / Island / Building / character-domain folders outside util
 
 ## Cursor rules
@@ -93,6 +106,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 | `project-workflows/agent-editor-tools/` | same | Generic examples only |
 | `project-workflows/editor-tool-doc-writing/` | same | If present and general |
 | `project-workflows/korean-git-commit/` | same | Keep this repo’s labels/examples |
+| `project-workflows/webhook-screenshot-feedback/` | same | Hub path → `Assets/CyKimExtension/Editor/Agent/Webhook/` |
 
 ### This-repo only
 
@@ -104,6 +118,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `blender-community/**`, Blender MCP workflows
 - popup / manager-pooling / user-data-schema / building-presentation / spreadsheet agent workflows
 - `project-onboarding/**`
+- `project-workflows/discord-screenshot-feedback/` (deprecated alias; use `webhook-screenshot-feedback`)
 - Full personal `unity-skills` tree (do not vendor)
 
 ## Include heuristics (new util / rule / skill)

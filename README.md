@@ -92,6 +92,22 @@ Inspector에서 필드를 읽기 전용으로 만듭니다.
 | Tools/Data/Data Path Open | persistentDataPath 탐색기 열기 |
 | **F12** (Inspector Component Shortcut) | 선택 객체가 TMP면 텍스트 입력 포커스, Image면 Source Image 선택 창 |
 
+#### Agent 웹훅 피드백 (`WebhookFeedback`)
+
+Discord/Slack 웹훅으로 텍스트·스크린샷 피드백을 보낸다. URL은 `Secrets/` (gitignore)에 두고, Agent는 MCP `execute_code`로 호출한다.
+
+```csharp
+using WebhookFeedbackSystem;
+
+WebhookFeedback.SetActiveProvider(WebhookFeedbackProvider.Discord);
+WebhookFeedback.SendText("제목", "설명");
+WebhookFeedback.Send(new[] { "Assets/Screenshots/a.png" }, "제목", "설명");
+```
+
+- Secrets: `discord_webhook_url.txt`, `slack_webhook_url.txt`, `webhook_active_provider.txt`
+- 메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)
+- 워크플로 스킬: `.cursor/skills/project-workflows/webhook-screenshot-feedback/`
+
 ## 📦 요구사항
 
 - Unity 2022.3 이상
@@ -149,7 +165,7 @@ Agent용 프로젝트 규칙·스킬은 `.cursor/`에 있습니다 (게임 도�
 | 경로 | 내용 |
 |------|------|
 | `.cursor/rules/` | `.meta` 금지, Editor batchmode 금지, Agent 전용 MenuItem, 한국어 커밋, C# 컨벤션, 라이브러리 개요 |
-| `.cursor/skills/project-workflows/` | 한국어 커밋, 에디터 도구 문서, Agent 전용 Editor 도구, 소스 프로젝트 `최신화` sync |
+| `.cursor/skills/project-workflows/` | 한국어 커밋, 에디터 도구 문서, Agent 전용 Editor 도구, 웹훅 피드백, 소스 프로젝트 `최신화` sync |
 
 다른 Unity 프로젝트 → 이 라이브러리 동기화는 채팅에서 `최신화`만 입력하면 됩니다.  
 경로 설정: 루트 `.env` (템플릿 `.env.example`). 정책:  
