@@ -2,6 +2,8 @@
 
 Unity 개발을 위한 유틸리티 및 확장 기능 모음입니다.
 
+📖 문서: https://cykim.gitbook.io/myutil/ *(Git Sync 연결 후 페이지가 채워집니다)*
+
 ## 📋 개요
 
 이 프로젝트는 Unity 개발 시 자주 사용하는 유틸리티 클래스, 커스텀 속성(Attribute), 에디터 도구들을 모아놓은 라이브러리입니다.
