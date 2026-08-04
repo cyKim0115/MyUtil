@@ -13,6 +13,7 @@
 * [런타임 유틸](learn/runtime-utils.md)
 * [Attribute · 데이터 구조](learn/attributes-and-data.md)
 * [에디터 도구](learn/editor-tools.md)
+* [Cursor 스킬 · 규칙](learn/cursor-skills.md)
 
 ## Playbooks
 
