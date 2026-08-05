@@ -13,20 +13,67 @@ namespace WebhookFeedbackSystem
     public static class WebhookFeedback
     {
         public const int MaxFilesPerMessage = 10;
+        public const string ScreenshotsFolderPath = "Assets/Screenshots";
+
+        private const string ClearScreenshotsMenuPath = "Tools/Agent/Webhook/Clear Screenshots Folder";
 
         [MenuItem("Tools/Agent/Webhook/Send Feedback")]
         static void SendFeedbackMenuStub()
         {
-            Debug.Log("[WebhookFeedback] Agent 전용. execute_code로 WebhookFeedback.Send / SendText / SetActiveProvider 를 호출하세요.");
+            Debug.Log("[WebhookFeedback] Agent 전용. execute_code로 WebhookFeedback.Send / SendText / SetActiveProvider / ClearScreenshotsFolder 를 호출하세요.");
         }
 
         [MenuItem("Tools/Agent/Webhook/Send Feedback", true)]
         static bool ValidateSendFeedbackMenuStub() => false; // Agent 전용. 사용자 Tools 메뉴에서는 비활성.
 
+        [MenuItem(ClearScreenshotsMenuPath)]
+        public static void ClearScreenshotsFolderMenu() => ClearScreenshotsFolder();
+
+        [MenuItem(ClearScreenshotsMenuPath, true)]
+        static bool ValidateClearScreenshotsFolderMenu() => false; // Agent 전용. 사용자 Tools 메뉴에서는 비활성.
+
         public static WebhookFeedbackProvider GetActiveProvider() => WebhookFeedbackSettings.GetActiveProvider();
 
         public static void SetActiveProvider(WebhookFeedbackProvider provider) =>
             WebhookFeedbackSettings.SetActiveProvider(provider);
+
+        /// <summary>
+        /// 웹훅/플레이테스트 캡처가 끝난 뒤 Assets/Screenshots 안의 파일을 전부 삭제한다.
+        /// 폴더와 Screenshots.meta 는 유지한다.
+        /// </summary>
+        public static int ClearScreenshotsFolder()
+        {
+            var absoluteFolder = WebhookFeedbackSettings.ToAbsolutePath(ScreenshotsFolderPath);
+            if (!Directory.Exists(absoluteFolder))
+            {
+                Debug.Log($"[WebhookFeedback] Screenshots 폴더 없음: {ScreenshotsFolderPath}");
+                return 0;
+            }
+
+            var deleted = 0;
+            foreach (var filePath in Directory.GetFiles(absoluteFolder))
+            {
+                var fileName = Path.GetFileName(filePath);
+                if (string.Equals(fileName, ".gitkeep", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    File.Delete(filePath);
+                    deleted++;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[WebhookFeedback] 스크린샷 삭제 실패: {filePath} ({ex.Message})");
+                }
+            }
+
+            AssetDatabase.Refresh();
+            Debug.Log($"[WebhookFeedback] Screenshots 폴더 정리 완료: {deleted}개 삭제 ({ScreenshotsFolderPath})");
+            return deleted;
+        }
 
         public static void SendText(string title, string description = null) =>
             SendText(GetActiveProvider(), title, description);

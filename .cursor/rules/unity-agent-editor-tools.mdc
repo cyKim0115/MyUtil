@@ -30,6 +30,13 @@ private static bool ValidateRun() => false; // Agent 전용
 - ❌ 비활성 메뉴에 `execute_menu_item` 의존하지 않는다.
 - ✅ `TypeName.MethodName();` 처럼 **타입.메서드**를 MCP `execute_code`로 호출한다.
 
+## 해당 도구 예
+
+| 클래스 | 메서드 |
+|---|---|
+| `AgentEditorDialogGuard` | `PrepareSave` / `PrepareDiscard` (씬·프리팹 dirty 정리, 모달 팝업 예방) |
+| `WebhookFeedback` | `Send` / `SendText` / `ClearScreenshotsFolder` |
+
 ## 활성 MenuItem을 유지하는 경우
 
 - 에디터 윈도우 (`Favorite Prefab`, `Remove Missing Scripts` 등)

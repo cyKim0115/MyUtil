@@ -89,8 +89,16 @@ WebhookFeedback.Send(
 
 Unity 콘솔 `[WebhookFeedback]` / `[WebhookFeedbackSettings]` 로그. `read_console`에 해당 접두어 필터.
 
+## 마무리: Screenshots 폴더 비우기
+
+전송·확인이 끝나면 `Assets/Screenshots/`를 비운다. 상세는 `project-workflows/screenshot-folder-cleanup`.
+
+```csharp
+WebhookFeedback.ClearScreenshotsFolder();
+```
+
 ## 주의
 
 - Editor 전용. `Tools/Agent/Webhook/Send Feedback` 메뉴는 비활성.
-- Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SetActiveProvider`.
+- Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SetActiveProvider` / `ClearScreenshotsFolder`.
 - 커밋 메시지/로그 안내에는 특정 서비스명을 남발하지 말고, 코드의 enum/Secrets 파일명만 정확히 쓴다.

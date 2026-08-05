@@ -42,6 +42,7 @@ private static bool ValidateRun()
 ```csharp
 // MCP execute_code
 SomeSetupTool.Run();
+AgentEditorDialogGuard.PrepareSave(); // dirty 씬/프리팹 저장 후 Stage 닫기
 ```
 
 ## 활성 MenuItem을 유지하는 경우

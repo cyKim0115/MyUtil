@@ -48,6 +48,7 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Editor/RemoveMissingScriptPrefabWindow.cs` | `Editor/RemoveMissingScriptPrefabWindow.cs` |
 | `Editor/RandomPrefabScatterWindow.cs` | `Editor/RandomPrefabScatterWindow.cs` |
 | `Editor/InspectorComponentShortcut.cs` | `Editor/InspectorComponentShortcut.cs` |
+| `Editor/AgentEditorDialogGuard.cs` | `Editor/AgentEditorDialogGuard.cs` |
 
 ### Extra tracked (relative to `SYNC_SOURCE_ROOT`, not util scripts root)
 
@@ -107,6 +108,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 | `project-workflows/editor-tool-doc-writing/` | same | If present and general |
 | `project-workflows/korean-git-commit/` | same | Keep this repo’s labels/examples |
 | `project-workflows/webhook-screenshot-feedback/` | same | Hub path → `Assets/CyKimExtension/Editor/Agent/Webhook/` |
+| `project-workflows/screenshot-folder-cleanup/` | same | Uses `WebhookFeedback.ClearScreenshotsFolder` |
 
 ### This-repo only
 
@@ -119,6 +121,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - popup / manager-pooling / user-data-schema / building-presentation / spreadsheet agent workflows
 - `project-onboarding/**`
 - `project-workflows/discord-screenshot-feedback/` (deprecated alias; use `webhook-screenshot-feedback`)
+- `project-workflows/grouped-git-commit/`, `git-commit-on-finish` rule — maintained outside this util library
 - Full personal `unity-skills` tree (do not vendor)
 
 ## Include heuristics (new util / rule / skill)
