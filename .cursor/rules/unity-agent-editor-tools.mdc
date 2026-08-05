@@ -35,7 +35,8 @@ private static bool ValidateRun() => false; // Agent 전용
 | 클래스 | 메서드 |
 |---|---|
 | `AgentEditorDialogGuard` | `PrepareSave` / `PrepareDiscard` (씬·프리팹 dirty 정리, 모달 팝업 예방) |
-| `WebhookFeedback` | `Send` / `SendText` / `ClearScreenshotsFolder` |
+| `WebhookFeedback` | `Send` / `SendText` / `SendRecording` / `ClearScreenshotsFolder` |
+| `AgentUnityRecorder` | `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` |
 
 ## 활성 MenuItem을 유지하는 경우
 

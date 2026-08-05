@@ -40,7 +40,7 @@ namespace WebhookFeedbackSystem
                 var form = new MultipartFormDataContent();
                 disposables.Add(form);
 
-                // embed에는 제목/설명만, 이미지는 일반 첨부로 올려 갤러리(가로) 배치를 유도한다.
+                // embed에는 제목/설명만, 파일은 일반 첨부로 올린다 (이미지 갤러리 / 영상 첨부).
                 var jsonContent = new StringContent(BuildTextPayloadJson(title, description), Encoding.UTF8, "application/json");
                 disposables.Add(jsonContent);
                 form.Add(jsonContent, "payload_json");
@@ -49,12 +49,13 @@ namespace WebhookFeedbackSystem
                 {
                     var fileContent = new ByteArrayContent(files[i].Bytes);
                     disposables.Add(fileContent);
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                        WebhookFeedbackMime.FromFileName(files[i].AttachmentName));
                     form.Add(fileContent, $"files[{i}]", files[i].AttachmentName);
                 }
 
                 var response = httpClient.PostAsync(webhookUrl, form).GetAwaiter().GetResult();
-                LogResponse(response, title, $"{files.Count}장");
+                LogResponse(response, title, $"{files.Count}파일");
             }
             catch (Exception e)
             {

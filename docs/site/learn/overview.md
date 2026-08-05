@@ -31,6 +31,7 @@ flowchart LR
 | `.cursor/rules/`, `.cursor/skills/` | Agent 규칙·스킬 | 원문 비공개 — [카탈로그](cursor-skills.md)에서 개념만 |
 | `docs/site/` | 사람용 문서 (이 사이트) | Git Sync 대상 |
 | `Secrets/` | 웹훅 URL 등 (gitignore) | 문서화만, 값 비공개 |
+| `Recordings/` | Recorder 출력 (gitignore, Assets 밖) | 커밋하지 않음 |
 
 ## 설계 원칙 (요약)
 

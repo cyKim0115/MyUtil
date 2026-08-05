@@ -8,7 +8,7 @@ using UnityEngine;
 namespace WebhookFeedbackSystem
 {
     /// <summary>
-    /// 웹훅 피드백 송신 허브. 활성 프로바이더로 Send/SendText를 위임한다.
+    /// 웹훅 피드백 송신 허브. 활성 프로바이더로 Send/SendText/SendRecording을 위임한다.
     /// </summary>
     public static class WebhookFeedback
     {
@@ -20,7 +20,7 @@ namespace WebhookFeedbackSystem
         [MenuItem("Tools/Agent/Webhook/Send Feedback")]
         static void SendFeedbackMenuStub()
         {
-            Debug.Log("[WebhookFeedback] Agent 전용. execute_code로 WebhookFeedback.Send / SendText / SetActiveProvider / ClearScreenshotsFolder 를 호출하세요.");
+            Debug.Log("[WebhookFeedback] Agent 전용. execute_code로 WebhookFeedback.Send / SendText / SendRecording / SetActiveProvider / ClearScreenshotsFolder 를 호출하세요.");
         }
 
         [MenuItem("Tools/Agent/Webhook/Send Feedback", true)]
@@ -86,7 +86,8 @@ namespace WebhookFeedbackSystem
                 return;
             }
 
-            ResolveTransport(provider).SendText(title, description);
+            foreach (var target in ExpandProviders(provider))
+                ResolveTransport(target).SendText(title, description);
         }
 
         public static void Send(string screenshotPath, string title, string description = null) =>
@@ -94,6 +95,27 @@ namespace WebhookFeedbackSystem
 
         public static void Send(string[] screenshotPaths, string title, string description = null) =>
             Send(GetActiveProvider(), screenshotPaths, title, description);
+
+        /// <summary>
+        /// 녹화 영상(MP4 등)을 활성 프로바이더로 전송한다. Discord는 첨부, Slack은 임시 URL 링크.
+        /// </summary>
+        public static void SendRecording(string recordingPath, string title, string description = null) =>
+            SendRecording(GetActiveProvider(), recordingPath, title, description);
+
+        public static void SendRecording(
+            WebhookFeedbackProvider provider,
+            string recordingPath,
+            string title,
+            string description = null)
+        {
+            if (string.IsNullOrWhiteSpace(recordingPath))
+            {
+                Debug.LogError("[WebhookFeedback] 전송할 녹화 경로가 없습니다.");
+                return;
+            }
+
+            Send(provider, new[] { recordingPath }, title, description);
+        }
 
         public static void Send(
             WebhookFeedbackProvider provider,
@@ -103,13 +125,13 @@ namespace WebhookFeedbackSystem
         {
             if (screenshotPaths == null || screenshotPaths.Length == 0)
             {
-                Debug.LogError("[WebhookFeedback] 전송할 스크린샷 경로가 없습니다. 텍스트만 보내려면 SendText를 사용하세요.");
+                Debug.LogError("[WebhookFeedback] 전송할 파일 경로가 없습니다. 텍스트만 보내려면 SendText를 사용하세요.");
                 return;
             }
 
             if (screenshotPaths.Length > MaxFilesPerMessage)
             {
-                Debug.LogError($"[WebhookFeedback] 한 메시지당 최대 {MaxFilesPerMessage}장까지 전송할 수 있습니다. (요청: {screenshotPaths.Length})");
+                Debug.LogError($"[WebhookFeedback] 한 메시지당 최대 {MaxFilesPerMessage}개까지 전송할 수 있습니다. (요청: {screenshotPaths.Length})");
                 return;
             }
 
@@ -121,7 +143,7 @@ namespace WebhookFeedbackSystem
                 var absolutePath = WebhookFeedbackSettings.ToAbsolutePath(screenshotPaths[i]);
                 if (!File.Exists(absolutePath))
                 {
-                    Debug.LogError($"[WebhookFeedback] 스크린샷 파일이 없습니다: {absolutePath}");
+                    Debug.LogError($"[WebhookFeedback] 파일이 없습니다: {absolutePath}");
                     return;
                 }
 
@@ -129,7 +151,20 @@ namespace WebhookFeedbackSystem
                 files.Add((attachmentName, File.ReadAllBytes(absolutePath)));
             }
 
-            ResolveTransport(provider).Send(files, title, description);
+            foreach (var target in ExpandProviders(provider))
+                ResolveTransport(target).Send(files, title, description);
+        }
+
+        static IEnumerable<WebhookFeedbackProvider> ExpandProviders(WebhookFeedbackProvider provider)
+        {
+            if (provider == WebhookFeedbackProvider.Both)
+            {
+                yield return WebhookFeedbackProvider.Discord;
+                yield return WebhookFeedbackProvider.Slack;
+                yield break;
+            }
+
+            yield return provider;
         }
 
         static IWebhookFeedbackTransport ResolveTransport(WebhookFeedbackProvider provider)

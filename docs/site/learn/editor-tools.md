@@ -21,7 +21,7 @@ icon: wrench
 
 ## WebhookFeedback
 
-Discord/Slack 웹훅으로 텍스트·스크린샷 피드백을 보냅니다. URL은 `Secrets/`(gitignore)에 둡니다.
+Discord/Slack 웹훅으로 텍스트·스크린샷·짧은 녹화 피드백을 보냅니다. URL은 `Secrets/`(gitignore)에 둡니다.
 
 ```csharp
 using WebhookFeedbackSystem;
@@ -29,15 +29,27 @@ using WebhookFeedbackSystem;
 WebhookFeedback.SetActiveProvider(WebhookFeedbackProvider.Discord);
 WebhookFeedback.SendText("제목", "설명");
 WebhookFeedback.Send(new[] { "Assets/Screenshots/a.png" }, "제목", "설명");
+WebhookFeedback.SendRecording(@"Recordings/clip.mp4", "제목", "설명");
 ```
 
 | Secrets 파일 | 내용 |
 |--------------|------|
 | `discord_webhook_url.txt` | Discord webhook URL |
 | `slack_webhook_url.txt` | Slack webhook URL |
-| `webhook_active_provider.txt` | `Discord` 또는 `Slack` |
+| `webhook_active_provider.txt` | `Discord` / `Slack` / `Both` |
 
-메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)입니다. 사람용 상세 워크플로는 Cursor 스킬 원문 경로: `.cursor/skills/project-workflows/webhook-screenshot-feedback/`
+메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)입니다. 매체 선택은 `webhook-report-media`, 전송은 `webhook-screenshot-feedback`.
+
+## AgentUnityRecorder
+
+Play Mode Game View → MP4 / PNG 시퀀스. 출력: 루트 `Recordings/`(gitignore). 패키지 `com.unity.recorder`.
+
+```csharp
+AgentUnityRecorder.StartMovie(10f);
+AgentUnityRecorder.GetStatus();
+```
+
+스킬: `unity-recorder`
 
 ## Editor 자동화 주의
 

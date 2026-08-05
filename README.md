@@ -105,7 +105,7 @@ AgentEditorDialogGuard.PrepareDiscard(); // 변경 폐기 후 Stage 닫기
 
 #### Agent 웹훅 피드백 (`WebhookFeedback`)
 
-Discord/Slack 웹훅으로 텍스트·스크린샷 피드백을 보낸다. URL은 `Secrets/` (gitignore)에 두고, Agent는 MCP `execute_code`로 호출한다.
+Discord/Slack 웹훅으로 텍스트·스크린샷·짧은 녹화 피드백을 보낸다. URL은 `Secrets/` (gitignore)에 두고, Agent는 MCP `execute_code`로 호출한다.
 
 ```csharp
 using WebhookFeedbackSystem;
@@ -113,12 +113,26 @@ using WebhookFeedbackSystem;
 WebhookFeedback.SetActiveProvider(WebhookFeedbackProvider.Discord);
 WebhookFeedback.SendText("제목", "설명");
 WebhookFeedback.Send(new[] { "Assets/Screenshots/a.png" }, "제목", "설명");
+WebhookFeedback.SendRecording(@"Recordings/clip.mp4", "제목", "설명");
 WebhookFeedback.ClearScreenshotsFolder(); // 전송 후 Assets/Screenshots 정리
 ```
 
-- Secrets: `discord_webhook_url.txt`, `slack_webhook_url.txt`, `webhook_active_provider.txt`
+- Secrets: `discord_webhook_url.txt`, `slack_webhook_url.txt`, `webhook_active_provider.txt` (`Discord` | `Slack` | `Both`)
 - 메뉴 `Tools/Agent/Webhook/...`는 Agent 전용(비활성)
-- 워크플로 스킬: `webhook-screenshot-feedback`, `screenshot-folder-cleanup`
+- 워크플로 스킬: `webhook-screenshot-feedback`, `webhook-report-media`, `screenshot-folder-cleanup`
+
+#### Agent Unity Recorder (`AgentUnityRecorder`)
+
+Play Mode Game View를 MP4 / PNG 시퀀스로 녹화한다. 출력은 프로젝트 루트 `Recordings/` (gitignore). 패키지: `com.unity.recorder`.
+
+```csharp
+AgentUnityRecorder.StartMovie(10f);
+AgentUnityRecorder.GetStatus();
+AgentUnityRecorder.Stop();
+```
+
+- Agent 전용(메뉴 비활성). 호출: MCP `execute_code`
+- 워크플로 스킬: `unity-recorder`
 
 ## 📦 요구사항
 
@@ -140,6 +154,9 @@ https://github.com/annulusgames/LitMotion.git?path=src/LitMotion/Assets/LitMotio
 ```text
 https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
+
+#### Unity Recorder
+- Package Manager: `com.unity.recorder` (AgentUnityRecorder용, 이미 `Packages/manifest.json`에 포함)
 
 #### Cursor IDE Support
 - https://github.com/boxqkrtm/com.unity.ide.cursor

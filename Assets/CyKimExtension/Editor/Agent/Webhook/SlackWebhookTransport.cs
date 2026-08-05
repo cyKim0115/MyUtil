@@ -10,7 +10,7 @@ namespace WebhookFeedbackSystem
 {
     /// <summary>
     /// Incoming Webhook은 로컬 파일 직접 첨부를 지원하지 않으므로,
-    /// 이미지를 단기 공개 호스트에 올린 뒤 image block URL로 포함한다.
+    /// 파일을 단기 공개 호스트에 올린 뒤 image block(이미지) 또는 링크로 포함한다.
     /// </summary>
     sealed class SlackWebhookTransport : IWebhookFeedbackTransport
     {
@@ -27,7 +27,7 @@ namespace WebhookFeedbackSystem
                 return;
             }
 
-            PostJson(webhookUrl, BuildPayloadJson(title, description, imageUrls: null), title ?? "(텍스트)");
+            PostJson(webhookUrl, BuildPayloadJson(title, description, imageUrls: null, linkUrls: null), title ?? "(텍스트)");
         }
 
         public void Send(IReadOnlyList<(string AttachmentName, byte[] Bytes)> files, string title, string description)
@@ -39,23 +39,31 @@ namespace WebhookFeedbackSystem
                 return;
             }
 
-            var imageUrls = new List<string>(files.Count);
+            var imageUrls = new List<string>();
+            var linkUrls = new List<string>();
             try
             {
                 using var httpClient = new HttpClient();
                 for (var i = 0; i < files.Count; i++)
                 {
-                    var url = UploadEphemeralImage(httpClient, files[i].AttachmentName, files[i].Bytes);
+                    var url = UploadEphemeralFile(httpClient, files[i].AttachmentName, files[i].Bytes);
                     if (string.IsNullOrEmpty(url))
                     {
-                        Debug.LogError($"[WebhookFeedback] 이미지 임시 업로드 실패: {files[i].AttachmentName}");
+                        Debug.LogError($"[WebhookFeedback] 파일 임시 업로드 실패: {files[i].AttachmentName}");
                         return;
                     }
 
-                    imageUrls.Add(url);
+                    if (WebhookFeedbackMime.IsImage(files[i].AttachmentName))
+                        imageUrls.Add(url);
+                    else
+                        linkUrls.Add($"{files[i].AttachmentName}: {url}");
                 }
 
-                PostJson(webhookUrl, BuildPayloadJson(title, description, imageUrls), title, $"{files.Count}장");
+                PostJson(
+                    webhookUrl,
+                    BuildPayloadJson(title, description, imageUrls, linkUrls),
+                    title,
+                    $"{files.Count}파일");
             }
             catch (Exception e)
             {
@@ -63,14 +71,14 @@ namespace WebhookFeedbackSystem
             }
         }
 
-        static string UploadEphemeralImage(HttpClient httpClient, string fileName, byte[] bytes)
+        static string UploadEphemeralFile(HttpClient httpClient, string fileName, byte[] bytes)
         {
             using var form = new MultipartFormDataContent();
             form.Add(new StringContent("fileupload"), "reqtype");
             form.Add(new StringContent(EphemeralUploadLifetime), "time");
 
             var fileContent = new ByteArrayContent(bytes);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(WebhookFeedbackMime.FromFileName(fileName));
             form.Add(fileContent, "fileToUpload", fileName);
 
             var response = httpClient.PostAsync(EphemeralUploadUrl, form).GetAwaiter().GetResult();
@@ -106,7 +114,11 @@ namespace WebhookFeedbackSystem
             }
         }
 
-        static string BuildPayloadJson(string title, string description, List<string> imageUrls)
+        static string BuildPayloadJson(
+            string title,
+            string description,
+            List<string> imageUrls,
+            List<string> linkUrls)
         {
             var sb = new StringBuilder();
             sb.Append('{');
@@ -132,6 +144,16 @@ namespace WebhookFeedbackSystem
                     sb.Append(WebhookFeedbackJson.Escape(description));
                     sb.Append("\"}}");
                 }
+            }
+
+            if (linkUrls != null && linkUrls.Count > 0)
+            {
+                if (hasBlock)
+                    sb.Append(',');
+                sb.Append("{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"");
+                sb.Append(WebhookFeedbackJson.Escape(string.Join("\n", linkUrls)));
+                sb.Append("\"}}");
+                hasBlock = true;
             }
 
             if (imageUrls != null)

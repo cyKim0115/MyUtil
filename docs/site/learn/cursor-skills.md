@@ -58,13 +58,21 @@ Agent가 **가끔** 돌리는 Editor 일회성 도구의 작성·호출 패턴�
 
 ### webhook-screenshot-feedback
 
-Game View 스크린샷·텍스트를 **Discord / Slack 웹훅**으로 보냅니다.
+Game View 스크린샷·텍스트·짧은 녹화를 **Discord / Slack 웹훅**으로 보냅니다.
 
 - URL·활성 프로바이더는 `Secrets/`(gitignore)
 - API 허브: `WebhookFeedback` — 전송 로직을 매번 새로 짜지 않음
 - 메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)
 
 개념·API 요약: [에디터 도구](editor-tools.md)의 WebhookFeedback 절
+
+### webhook-report-media
+
+웹훅 보고 시 **text / screenshot / recording** 중 무엇을 붙일지 판단합니다. 전송 API는 `webhook-screenshot-feedback`을 따릅니다.
+
+### unity-recorder
+
+Play Mode Game View를 MP4 / PNG 시퀀스로 녹화합니다 (`AgentUnityRecorder`, `Recordings/`).
 
 ### sync-from-source
 

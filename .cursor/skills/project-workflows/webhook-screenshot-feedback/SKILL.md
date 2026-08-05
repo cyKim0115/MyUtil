@@ -6,6 +6,7 @@ description: Send Unity Game View screenshot feedback (or text-only notes) throu
 # Webhook Screenshot Feedback
 
 캡처·웹훅 전송 로직은 고정 구현되어 있다. **매번 새로 코드를 생성하지 말고** `WebhookFeedback` API만 호출한다.
+매체(text / screenshot / recording) 선택은 `webhook-report-media`를 따른다.
 
 ## 사전 준비
 
@@ -23,7 +24,7 @@ description: Send Unity Game View screenshot feedback (or text-only notes) throu
 using WebhookFeedbackSystem;
 
 WebhookFeedback.SetActiveProvider(WebhookFeedbackProvider.Slack);
-// or WebhookFeedbackProvider.Discord
+// or WebhookFeedbackProvider.Discord / Both
 
 var current = WebhookFeedback.GetActiveProvider();
 ```
@@ -78,12 +79,23 @@ WebhookFeedback.Send(
     "설명");
 ```
 
+### 녹화(MP4 등)
+
+`Recordings/` 등 Assets 밖 경로도 절대/상대 모두 가능. Slack은 임시 URL 링크, Discord는 첨부.
+
+```csharp
+using WebhookFeedbackSystem;
+
+WebhookFeedback.SendRecording(@"Recordings/verify_clip.mp4", "실패 클립", "타임아웃 구간");
+```
+
+녹화는 `unity-recorder` + `AgentUnityRecorder`로 만든다.
 ## 프로바이더 차이
 
 | 프로바이더 | 이미지 전송 |
 |---|---|
-| Discord | multipart 일반 첨부(갤러리) |
-| Slack | Incoming Webhook 제약으로 단기 공개 URL 업로드 후 image block |
+| Discord | multipart 일반 첨부(이미지 갤러리 / 영상) |
+| Slack | Incoming Webhook 제약으로 단기 공개 URL 업로드 후 image block 또는 링크 |
 
 ## 확인
 
@@ -100,5 +112,5 @@ WebhookFeedback.ClearScreenshotsFolder();
 ## 주의
 
 - Editor 전용. `Tools/Agent/Webhook/Send Feedback` 메뉴는 비활성.
-- Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SetActiveProvider` / `ClearScreenshotsFolder`.
+- Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SendRecording` / `SetActiveProvider` / `ClearScreenshotsFolder`.
 - 커밋 메시지/로그 안내에는 특정 서비스명을 남발하지 말고, 코드의 enum/Secrets 파일명만 정확히 쓴다.

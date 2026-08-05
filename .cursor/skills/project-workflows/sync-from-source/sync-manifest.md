@@ -58,9 +58,13 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackSettings.cs` | `Editor/Agent/Webhook/WebhookFeedbackSettings.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackProvider.cs` | `Editor/Agent/Webhook/WebhookFeedbackProvider.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackJson.cs` | `Editor/Agent/Webhook/WebhookFeedbackJson.cs` |
+| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackMime.cs` | `Editor/Agent/Webhook/WebhookFeedbackMime.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` | `Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/DiscordWebhookTransport.cs` | `Editor/Agent/Webhook/DiscordWebhookTransport.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/SlackWebhookTransport.cs` | `Editor/Agent/Webhook/SlackWebhookTransport.cs` |
+| `Assets/GameResource/Script/Editor/AgentUnityRecorder.cs` | `Editor/Agent/AgentUnityRecorder.cs` |
+
+Note: When syncing `AgentUnityRecorder`, **strip game-coupled APIs** (e.g. map pan / project camera controllers). Keep `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` only.
 
 Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, use `SYNC_SOURCE_EXTRA_DRAWER_REL` and sync into `Editor/SerializableDictionaryDrawer.cs`.
 
@@ -108,6 +112,8 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 | `project-workflows/editor-tool-doc-writing/` | same | If present and general |
 | `project-workflows/korean-git-commit/` | same | Keep this repo’s labels/examples |
 | `project-workflows/webhook-screenshot-feedback/` | same | Hub path → `Assets/CyKimExtension/Editor/Agent/Webhook/` |
+| `project-workflows/webhook-report-media/` | same | Drop source-game playtest IDs; keep decision table |
+| `project-workflows/unity-recorder/` | same | Path → `AgentUnityRecorder`; drop game ForceEnter / map-pan examples |
 | `project-workflows/screenshot-folder-cleanup/` | same | Uses `WebhookFeedback.ClearScreenshotsFolder` |
 
 ### This-repo only
@@ -121,6 +127,8 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - popup / manager-pooling / user-data-schema / building-presentation / spreadsheet agent workflows
 - `project-onboarding/**`
 - `project-workflows/discord-screenshot-feedback/` (deprecated alias; use `webhook-screenshot-feedback`)
+- `project-workflows/agent-playtest/`, `project-workflows/editor-playtest/` — game bootstrap / domain scenarios (B/C)
+- Source `Cheat/AgentPlaytest/**`, `Editor/Agent/Playtest/**` — playtest orchestration stays in host games
 - `project-workflows/grouped-git-commit/`, `git-commit-on-finish` rule — maintained outside this util library
 - Full personal `unity-skills` tree (do not vendor)
 
@@ -149,4 +157,4 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 
 ## Packages reference
 
-Documented in root `README.md`. Sync may need LitMotion, UniTask; Cursor IDE / Unity MCP / NuGetForUnity / MemoryPack as docs unless scripts require them.
+Documented in root `README.md`. Sync may need LitMotion, UniTask, Unity Recorder (`com.unity.recorder`); Cursor IDE / Unity MCP / NuGetForUnity / MemoryPack as docs unless scripts require them.

@@ -17,5 +17,6 @@ Assets/CyKimExtension/.DS_Store
 *.env
 !.env.example
 Secrets/
+Recordings/
 Assets/Screenshots/
 Assets/Screenshots.meta
