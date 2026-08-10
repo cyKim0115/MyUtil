@@ -1,0 +1,3 @@
+[submodule "Assets/CyKimExtension/Editor/Animation"]
+	path = Assets/CyKimExtension/Editor/Animation
+	url = https://github.com/cyKim0115/AnimationClipPathRemap.git
