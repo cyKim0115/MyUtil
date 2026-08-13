@@ -20,6 +20,7 @@ icon: wand-magic-sparkles
 | `agent-editor-tools` | Agent 전용 Editor 도구 추가·호출 | 일회성 셋업/재생성 |
 | `webhook-screenshot-feedback` | Discord/Slack으로 텍스트·스크린샷 피드백 | 「피드백 보내」 |
 | `sync-from-source` | 다른 Unity 프로젝트에서 범용 자산 동기화 | `최신화` |
+| `particle-effect-controller` | 멀티 이미터 FX 루트 컨트롤러 | 부모 Stop이 자식을 끄는지 |
 
 인덱스(라우팅만): `.cursor/skills/project-workflows/SKILL.md` — 개별 스킬로 분기합니다.
 
@@ -73,6 +74,10 @@ Game View 스크린샷·텍스트·짧은 녹화를 **Discord / Slack 웹훅**�
 ### unity-recorder
 
 Play Mode Game View를 MP4 / PNG 시퀀스로 녹화합니다 (`AgentUnityRecorder`, `Recordings/`).
+
+### particle-effect-controller
+
+멀티 이미터 VFX 루트에 **렌더러 없는 `ParticleSystem`**을 두면 `Play` / `Stop` / `Pause` 기본값 `withChildren: true`로 자식 전체를 묶는다. Duration 종료는 자식 Stop이 아니다. C# 래퍼는 두지 않는다.
 
 ### sync-from-source
 

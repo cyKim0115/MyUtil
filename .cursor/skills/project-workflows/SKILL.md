@@ -1,6 +1,6 @@
 ---
 name: project-workflows
-description: Workflow index for Korean commits, editor-tool docs, agent-only editor tools, webhook feedback/media, Unity Recorder, screenshot cleanup, and source-project sync. Use when committing, writing editor tool guides, adding Agent-only MenuItem tools, sending webhook feedback, choosing report media, recording Game View, clearing Screenshots, or syncing/최신화 from a configured source Unity project.
+description: Workflow index for Korean commits, editor-tool docs, agent-only editor tools, webhook feedback/media, Unity Recorder, screenshot cleanup, particle effect controllers, and source-project sync. Use when committing, writing editor tool guides, adding Agent-only MenuItem tools, sending webhook feedback, choosing report media, recording Game View, clearing Screenshots, grouping ParticleSystem hierarchies, or syncing/최신화 from a configured source Unity project.
 disable-model-invocation: true
 ---
 
@@ -18,6 +18,7 @@ Workflow index for this util library (`CyKimExtension`).
 - `unity-recorder` — Game View MP4 / PNG sequence via `AgentUnityRecorder`
 - `screenshot-folder-cleanup` — Clear `Assets/Screenshots` after webhook/playtest captures
 - `sync-from-source` — Sync portable utils/rules/skills from `.env`-configured source (`최신화`)
+- `particle-effect-controller` — Root ParticleSystem (renderer off) as Play/Stop controller for child emitters
 
 ## Routing
 
@@ -30,3 +31,4 @@ Workflow index for this util library (`CyKimExtension`).
 - Game View movie / image sequence → `unity-recorder`
 - Screenshots folder cleanup → `screenshot-folder-cleanup`
 - `최신화` / sync → `sync-from-source` (+ `sync-manifest.md`, repo-root `.env`)
+- Multi-emitter VFX / parent Stop drives children / renderer-off root ParticleSystem → `particle-effect-controller`
