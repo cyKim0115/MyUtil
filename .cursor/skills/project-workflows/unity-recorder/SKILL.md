@@ -100,6 +100,7 @@ return AgentUnityRecorder.StartMovie(6f, cameraTag: "MainCamera");
 
 - `TimeInterval`은 Recorder가 종료한다. Agent는 **블로킹 루프를 Editor에 돌리지 말고** 채팅 쪽에서 `duration + 2~3s` 대기 후 `GetStatus`/`Stop`한다.
 - Domain reload / Play 종료 시 컨트롤러 static은 날아갈 수 있다. 마지막 경로는 `EditorPrefs`에 남으므로 `GetLastOutputPath()` / `GetStatus()`로 확인한다.
+- 해상도를 기본값(1080×1920)과 다르게 지정하면 시작 시 Game View `selectedSizeIndex`를 저장했다가, `Stop()` 또는 `TimeInterval` 자동 종료 때(Agent가 `Stop`을 호출하지 않아도) 자동 원복한다. 별도 처리 불필요.
 
 ## Webhook
 

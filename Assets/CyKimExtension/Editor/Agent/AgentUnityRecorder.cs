@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Encoder;
@@ -10,6 +11,7 @@ using UnityEngine;
 /// <summary>
 /// Agent-only Unity Recorder helper. Call via MCP execute_code, e.g. AgentUnityRecorder.StartMovie(10f).
 /// Output defaults to project-root Recordings/ (gitignored). Requires Play Mode for Game View capture.
+/// 저해상도/커스텀 해상도 녹화 시 Game View selectedSizeIndex를 저장했다가 Stop/자동종료 때 원복한다.
 /// </summary>
 public static class AgentUnityRecorder
 {
@@ -24,6 +26,11 @@ public static class AgentUnityRecorder
 
     private static RecorderController _controller;
     private static string _pendingPathNoExt;
+
+    private static bool _hasSavedGameViewSize;
+    private static int _savedGameViewSizeIndex;
+    private static bool _restoreGameViewAfterRecording;
+    private static bool _watchRecordingEnd;
 
     public static string DefaultOutputDirectory =>
         Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Recordings"));
@@ -68,6 +75,7 @@ public static class AgentUnityRecorder
             Stop();
 
         EnsureOutputDirectory();
+        BeginGameViewSizeGuard(width, height);
 
         var stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var baseName = string.IsNullOrWhiteSpace(fileName) ? $"movie_{stamp}" : SanitizeFileName(fileName);
@@ -99,6 +107,7 @@ public static class AgentUnityRecorder
         _controller = new RecorderController(controllerSettings);
         _controller.PrepareRecording();
         _controller.StartRecording();
+        StartWatchRecordingEnd();
 
         var outputPath = _pendingPathNoExt + ".mp4";
         EditorPrefs.SetString(PrefsLastOutput, outputPath);
@@ -133,6 +142,7 @@ public static class AgentUnityRecorder
             Stop();
 
         EnsureOutputDirectory();
+        BeginGameViewSizeGuard(width, height);
 
         var stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var baseName = string.IsNullOrWhiteSpace(fileName) ? $"seq_{stamp}" : SanitizeFileName(fileName);
@@ -159,6 +169,7 @@ public static class AgentUnityRecorder
         _controller = new RecorderController(controllerSettings);
         _controller.PrepareRecording();
         _controller.StartRecording();
+        StartWatchRecordingEnd();
 
         EditorPrefs.SetString(PrefsLastOutput, _pendingPathNoExt + "_####.png");
         EditorPrefs.SetString(PrefsLastMode, "image_sequence");
@@ -175,14 +186,20 @@ public static class AgentUnityRecorder
 
     public static string Stop()
     {
+        StopWatchRecordingEnd();
+
         if (_controller == null)
+        {
+            RestoreGameViewSizeIfNeeded();
             return $"idle recording=false last={GetLastOutputPath()}";
+        }
 
         var wasRecording = _controller.IsRecording();
         if (wasRecording)
             _controller.StopRecording();
 
         _controller = null;
+        RestoreGameViewSizeIfNeeded();
         var path = GetLastOutputPath();
         return $"stopped wasRecording={wasRecording} path={path} exists={OutputExists(path)}";
     }
@@ -209,6 +226,122 @@ public static class AgentUnityRecorder
         if (!Directory.Exists(dir))
             Directory.CreateDirectory(dir);
         return dir;
+    }
+
+    private static void BeginGameViewSizeGuard(int width, int height)
+    {
+        // 기본(1080×1920)이 아니면 저해상도/커스텀 녹화로 보고, 종료 시 Game View 사이즈 원복.
+        _restoreGameViewAfterRecording = width != DefaultWidth || height != DefaultHeight;
+
+        if (!_restoreGameViewAfterRecording)
+            return;
+
+        if (_hasSavedGameViewSize)
+            return;
+
+        if (!TryGetGameViewSelectedSizeIndex(out var index))
+            return;
+
+        _savedGameViewSizeIndex = index;
+        _hasSavedGameViewSize = true;
+    }
+
+    private static void RestoreGameViewSizeIfNeeded()
+    {
+        if (!_restoreGameViewAfterRecording || !_hasSavedGameViewSize)
+        {
+            _restoreGameViewAfterRecording = false;
+            _hasSavedGameViewSize = false;
+            return;
+        }
+
+        if (TrySetGameViewSelectedSizeIndex(_savedGameViewSizeIndex))
+        {
+            Debug.Log($"[AgentUnityRecorder] Restored Game View size index {_savedGameViewSizeIndex}");
+        }
+
+        _restoreGameViewAfterRecording = false;
+        _hasSavedGameViewSize = false;
+    }
+
+    private static void StartWatchRecordingEnd()
+    {
+        if (_watchRecordingEnd)
+            return;
+
+        _watchRecordingEnd = true;
+        EditorApplication.update += WatchRecordingEnd;
+    }
+
+    private static void StopWatchRecordingEnd()
+    {
+        if (!_watchRecordingEnd)
+            return;
+
+        _watchRecordingEnd = false;
+        EditorApplication.update -= WatchRecordingEnd;
+    }
+
+    private static void WatchRecordingEnd()
+    {
+        // TimeInterval 자동 종료 시 Stop()을 안 불러도 Game View를 원복한다.
+        if (_controller == null)
+        {
+            StopWatchRecordingEnd();
+            RestoreGameViewSizeIfNeeded();
+            return;
+        }
+
+        if (_controller.IsRecording())
+            return;
+
+        _controller = null;
+        StopWatchRecordingEnd();
+        RestoreGameViewSizeIfNeeded();
+    }
+
+    private static bool TryGetGameViewSelectedSizeIndex(out int index)
+    {
+        index = -1;
+        var gameView = FindGameViewWindow();
+        if (gameView == null)
+            return false;
+
+        var prop = gameView.GetType().GetProperty(
+            "selectedSizeIndex",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (prop == null)
+            return false;
+
+        index = (int)prop.GetValue(gameView);
+        return true;
+    }
+
+    private static bool TrySetGameViewSelectedSizeIndex(int index)
+    {
+        var gameView = FindGameViewWindow();
+        if (gameView == null)
+            return false;
+
+        var prop = gameView.GetType().GetProperty(
+            "selectedSizeIndex",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (prop == null || !prop.CanWrite)
+            return false;
+
+        prop.SetValue(gameView, index);
+        gameView.Repaint();
+        return true;
+    }
+
+    private static EditorWindow FindGameViewWindow()
+    {
+        var gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
+        if (gameViewType == null)
+            return null;
+
+        var windows = Resources.FindObjectsOfTypeAll(gameViewType);
+        return windows != null && windows.Length > 0 ? windows[0] as EditorWindow : null;
     }
 
     private static CoreEncoderSettings.VideoEncodingQuality ParseQuality(string quality)
