@@ -112,5 +112,6 @@ WebhookFeedback.ClearScreenshotsFolder();
 ## 주의
 
 - Editor 전용. `Tools/Agent/Webhook/Send Feedback` 메뉴는 비활성.
-- Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SendRecording` / `SetActiveProvider` / `ClearScreenshotsFolder`.
+- 평상시 Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SendRecording` / `SetActiveProvider` / `ClearScreenshotsFolder`.
+- 웹훅 전송 자체는 URL로의 순수 HTTP POST라 **Unity Editor/MCP 연결과 무관**하다. Unity MCP가 끊겼을 때는 `Secrets/discord_webhook_url.txt` (또는 `slack_webhook_url.txt`)를 직접 읽어 셸에서 바로 POST해도 된다 (텍스트 전용, Discord 예: `{"embeds":[{"title":"...","description":"..."}]}`를 `application/json`으로 POST). 스크린샷/녹화 첨부는 Unity가 캡처해야 하므로 이 폴백이 적용되지 않는다.
 - 커밋 메시지/로그 안내에는 특정 서비스명을 남발하지 말고, 코드의 enum/Secrets 파일명만 정확히 쓴다.
