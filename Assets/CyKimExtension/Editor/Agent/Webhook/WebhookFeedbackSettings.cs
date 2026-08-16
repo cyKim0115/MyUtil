@@ -47,12 +47,17 @@ namespace WebhookFeedbackSystem
             {
                 WebhookFeedbackProvider.Discord => DiscordWebhookUrlFilePath,
                 WebhookFeedbackProvider.Slack => SlackWebhookUrlFilePath,
+                WebhookFeedbackProvider.Both => throw new ArgumentException(
+                    "Both는 URL 파일이 없다. Discord/Slack 각각을 사용한다.", nameof(provider)),
                 _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, null),
             };
         }
 
         public static string ReadWebhookUrl(WebhookFeedbackProvider provider)
         {
+            if (provider == WebhookFeedbackProvider.Both)
+                throw new ArgumentException("Both는 URL 파일이 없다. Discord/Slack 각각을 사용한다.", nameof(provider));
+
             var absolutePath = ToAbsolutePath(GetWebhookUrlFilePath(provider));
             return File.Exists(absolutePath) ? File.ReadAllText(absolutePath).Trim() : null;
         }
