@@ -101,6 +101,10 @@ MCP 작업 전 dirty 씬·프리팹 Stage를 저장/폐기해 Save·Discard·Rel
 ```csharp
 AgentEditorDialogGuard.PrepareSave();    // 저장 후 Stage 닫기
 AgentEditorDialogGuard.PrepareDiscard(); // 변경 폐기 후 Stage 닫기
+
+// Stage를 닫지 않고 유지해야 할 때 (Forest Window 리빌드·라이브 프리뷰 등)
+AgentEditorDialogGuard.SaveOpenPrefabStageWithoutClosing();
+AgentEditorDialogGuard.SaveAssetsRespectingOpenPrefabStage(); // Stage 열려있으면 Refresh 생략
 ```
 
 #### Agent 웹훅 피드백 (`WebhookFeedback`)

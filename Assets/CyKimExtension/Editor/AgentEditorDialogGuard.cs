@@ -82,6 +82,37 @@ public static class AgentEditorDialogGuard
         return sb.ToString();
     }
 
+    /// <summary>
+    /// 열린 Prefab Stage를 저장하고 dirty를 지운다. Stage는 닫지 않는다.
+    /// Forest Window 리빌드·라이브 프리뷰 후 Keep changes 모달 예방용.
+    /// </summary>
+    public static string SaveOpenPrefabStageWithoutClosing()
+    {
+        var stage = PrefabStageUtility.GetCurrentPrefabStage();
+        if (stage == null)
+            return "prefabStage=none";
+
+        var path = stage.assetPath;
+        if (!PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, path, out var success) || !success)
+        {
+            Debug.LogError($"[AgentEditorDialogGuard] Failed to save prefab stage: {path}");
+            return $"prefabStageSaveFailed={path}";
+        }
+
+        stage.ClearDirtiness();
+        return $"prefabStageSaved={path}";
+    }
+
+    /// <summary>
+    /// Prefab Stage가 열려 있으면 Refresh를 생략해 편집 창 퇴출·Reload 모달을 피한다.
+    /// </summary>
+    public static void SaveAssetsRespectingOpenPrefabStage()
+    {
+        AssetDatabase.SaveAssets();
+        if (PrefabStageUtility.GetCurrentPrefabStage() == null)
+            AssetDatabase.Refresh();
+    }
+
     private static void HandlePrefabStage(bool saveChanges, StringBuilder sb)
     {
         var stage = PrefabStageUtility.GetCurrentPrefabStage();
