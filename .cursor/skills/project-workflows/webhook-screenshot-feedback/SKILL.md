@@ -5,8 +5,14 @@ description: Send Unity Game View screenshot feedback (or text-only notes) throu
 
 # Webhook Screenshot Feedback
 
-캡처·웹훅 전송 로직은 고정 구현되어 있다. **매번 새로 코드를 생성하지 말고** `WebhookFeedback` API만 호출한다.
+캡처·웹훅 전송 로직은 고정 구현되어 있다. **매번 새로 코드를 생성하지 말고** 정해진 방식만 따른다.
 매체(text / screenshot / recording) 선택은 `webhook-report-media`를 따른다.
+
+**텍스트 전용 보고는 Unity Editor/MCP를 절대 거치지 않는다.** 진행 상황·완료 보고·계획표 등 텍스트만 보낼 때는
+아래 "텍스트만" 절의 셸 스크립트로 직접 POST한다. Unity MCP `execute_code`로 `WebhookFeedback.SendText`를
+호출하는 경로는 쓰지 않는다 (Unity 인스턴스가 없거나 연결이 끊겨도 항상 보낼 수 있어야 하고, 연결 여부로
+보고가 막혀서는 안 된다). 스크린샷/녹화 첨부는 캡처 자체가 Unity에서만 가능하므로 그 경우에 한해
+`WebhookFeedback.Send` / `SendRecording`을 MCP `execute_code`로 호출한다.
 
 ## 사전 준비
 
@@ -31,13 +37,72 @@ var current = WebhookFeedback.GetActiveProvider();
 
 ## API
 
-### 텍스트만
+### 텍스트만 — 항상 셸에서 직접 POST (Unity 없이)
 
-```csharp
-using WebhookFeedbackSystem;
+Agent 환경(Bash/PowerShell)에서 아래 스크립트를 스크래치패드에 써서 실행한다. `Secrets/webhook_active_provider.txt`를
+직접 읽어 `Discord` / `Slack` / `Both`에 맞게 보낸다. Unity가 켜져 있는지, MCP가 연결됐는지는 확인하지 않는다.
 
-WebhookFeedback.SendText("피드백 제목", "논의할 내용 요약");
+```python
+import json
+import urllib.request
+import urllib.error
+from pathlib import Path
+
+PROJECT_ROOT = Path(r"C:\Users\cykim\repo\MyUtil")  # 대상 프로젝트 루트로 교체
+SECRETS = PROJECT_ROOT / "Secrets"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+
+TITLE = "제목"
+DESCRIPTION = "설명"
+
+def read_secret(name):
+    p = SECRETS / name
+    return p.read_text(encoding="utf-8-sig").strip() if p.exists() else None
+
+def active_provider():
+    raw = read_secret("webhook_active_provider.txt")
+    return (raw or "Discord").strip()
+
+def post_json(url, payload):
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "User-Agent": UA},
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            print("status:", resp.status)
+    except urllib.error.HTTPError as e:
+        print("HTTPError:", e.code, e.read().decode("utf-8", "ignore"))
+        raise
+
+def send_discord(url):
+    post_json(url, {"embeds": [{"color": 0x5865F2, "title": TITLE, "description": DESCRIPTION}]})
+
+def send_slack(url):
+    post_json(url, {
+        "text": TITLE or DESCRIPTION,
+        "icon_emoji": ":pepe_dance:",
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": TITLE or "Feedback"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": DESCRIPTION}},
+        ],
+    })
+
+provider = active_provider()
+if provider in ("Discord", "Both"):
+    url = read_secret("discord_webhook_url.txt")
+    if url:
+        send_discord(url)
+if provider in ("Slack", "Both"):
+    url = read_secret("slack_webhook_url.txt")
+    if url:
+        send_slack(url)
 ```
+
+- Secrets `.txt`는 BOM이 붙어 있을 수 있어 `utf-8-sig`로 읽는다.
+- Discord 웹훅 도메인은 Cloudflare 뒤에 있어 브라우저형 `User-Agent` 없이 POST하면 `403 error code: 1010`이 난다. 위 스크립트처럼 항상 UA를 지정한다.
+- `WebhookFeedback.cs` / `DiscordWebhookTransport.cs` / `SlackWebhookTransport.cs`의 JSON 포맷을 그대로 따른 것이므로, C# 쪽 포맷이 바뀌면 이 스크립트도 맞춰 갱신한다.
 
 ### 스크린샷 + 제목/설명
 
@@ -99,7 +164,8 @@ WebhookFeedback.SendRecording(@"Recordings/verify_clip.mp4", "실패 클립", "�
 
 ## 확인
 
-Unity 콘솔 `[WebhookFeedback]` / `[WebhookFeedbackSettings]` 로그. `read_console`에 해당 접두어 필터.
+- 텍스트(직접 POST): 스크립트 출력의 `status:` (200번대) 또는 `HTTPError:` 로 확인한다. Unity 콘솔에는 남지 않는다.
+- 스크린샷/녹화(MCP 경유): Unity 콘솔 `[WebhookFeedback]` / `[WebhookFeedbackSettings]` 로그. `read_console`에 해당 접두어 필터.
 
 ## 마무리: Screenshots 폴더 비우기
 
@@ -111,7 +177,7 @@ WebhookFeedback.ClearScreenshotsFolder();
 
 ## 주의
 
-- Editor 전용. `Tools/Agent/Webhook/Send Feedback` 메뉴는 비활성.
-- 평상시 Agent 호출은 MCP `execute_code`로 `WebhookFeedback.Send` / `SendText` / `SendRecording` / `SetActiveProvider` / `ClearScreenshotsFolder`.
-- 웹훅 전송 자체는 URL로의 순수 HTTP POST라 **Unity Editor/MCP 연결과 무관**하다. Unity MCP가 끊겼을 때는 `Secrets/discord_webhook_url.txt` (또는 `slack_webhook_url.txt`)를 직접 읽어 셸에서 바로 POST해도 된다 (텍스트 전용, Discord 예: `{"embeds":[{"title":"...","description":"..."}]}`를 `application/json`으로 POST). 스크린샷/녹화 첨부는 Unity가 캡처해야 하므로 이 폴백이 적용되지 않는다.
+- Editor 전용 기능(`WebhookFeedback.cs` 등)은 `Tools/Agent/Webhook/Send Feedback` 메뉴가 비활성인 채로 MCP에서만 호출된다 — 단, 이는 스크린샷/녹화 첨부 경로에 한한다.
+- **텍스트 전용 보고는 Unity MCP `execute_code`로 `WebhookFeedback.SendText`를 호출하지 않는다.** 항상 "텍스트만" 절의 셸 스크립트로 직접 POST한다. Unity 인스턴스 유무·MCP 연결 여부는 텍스트 보고를 막는 조건이 될 수 없다.
+- 스크린샷(`Send`)·녹화(`SendRecording`)는 캡처 자체가 Unity에서만 가능하므로 MCP `execute_code`로 `WebhookFeedback.Send` / `SendRecording` / `SetActiveProvider` / `ClearScreenshotsFolder`를 호출한다.
 - 커밋 메시지/로그 안내에는 특정 서비스명을 남발하지 말고, 코드의 enum/Secrets 파일명만 정확히 쓴다.
