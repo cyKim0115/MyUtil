@@ -66,7 +66,15 @@ Map: relative to source util root → relative to `CyKimExtension`.
 
 Note: When syncing `AgentUnityRecorder`, **strip game-coupled APIs** (e.g. map pan / project camera controllers). Keep `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` only.
 
+Note: `AgentUnityRecorder`의 ffmpeg faststart 리먹스(`ScheduleFaststartRemux` / `TryRemuxFaststart`)는 프로젝트 의존이 없어 추적 대상이다. ffmpeg가 없으면 경고 후 원본을 유지하는 동작을 그대로 지킨다.
+
 Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, use `SYNC_SOURCE_EXTRA_DRAWER_REL` and sync into `Editor/SerializableDictionaryDrawer.cs`.
+
+### 서브모듈 (sync 대상 아님)
+
+| 경로 | 관리 |
+|------|------|
+| `Editor/Animation/**` | 독립 저장소 `AnimationClipPathRemap` 서브모듈. 소스 프로젝트에 같은 스크립트가 있어도 **덮어쓰지 않는다** — 수정은 upstream에서 하고 `git submodule update`로 받는다. 관련 문서는 `Doc/AnimationClipPathRemap/`. |
 
 ### Always skip (scripts)
 
@@ -76,6 +84,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `Editor/VoxelFloor*.cs`
 - `Editor/PrefabEditEnvironmentSetup.cs` (project scene paths)
 - `Editor/OneMobilePopFontAtlasSetup.cs` (project font path)
+- `Editor/AnimationClipPathRemapper.cs`, `Editor/AnimationClipPathRemapEditorWindow.cs` (소스 사본. MyUtil은 서브모듈 `Editor/Animation/`을 단일 소스로 쓴다)
 - `Editor/Agent/DiscordFeedbackSender.cs` (source-only Discord 하위 호환 래퍼; MyUtil은 `WebhookFeedback`만 유지)
 - Anything under Blender / Island / Building / character-domain folders outside util
 
@@ -115,6 +124,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 | `project-workflows/webhook-report-media/` | same | Drop source-game playtest IDs; keep decision table |
 | `project-workflows/unity-recorder/` | same | Path → `AgentUnityRecorder`; drop game ForceEnter / map-pan examples |
 | `project-workflows/screenshot-folder-cleanup/` | same | Uses `WebhookFeedback.ClearScreenshotsFolder` |
+| `project-workflows/particle-effect-controller/` | same | MyUtil 우선. 소스에 없으면 유지만 하고 삭제하지 않음 |
 
 ### This-repo only
 

@@ -20,9 +20,9 @@ git submodule update --init --recursive
 
 ## 원본 이식
 
-TeenipingTycoon `Doc/AnimationClipPathRemap/MyUtil-Handoff.md`에서 MyUtil로 옮긴 뒤, 독립 저장소로 분리했다.
+소스 프로젝트의 `Doc/AnimationClipPathRemap/MyUtil-Handoff.md`에서 MyUtil로 옮긴 뒤, 독립 저장소로 분리했다.
 
 ## 남은 작업 (소비 프로젝트)
 
-- [ ] TeenipingTycoon 쪽 중복 스크립트 제거 또는 동일 서브모듈로 단일 소스 정리
+- [ ] 소스 프로젝트 쪽 중복 스크립트 제거 또는 동일 서브모듈로 단일 소스 정리
 - [ ] MyUtil Editor 첫 import 후 `.meta`를 서브모듈에 커밋 (GUID 고정)
