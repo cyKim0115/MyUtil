@@ -19,9 +19,10 @@ description: Agent-only Unity Editor setup/optimize tools — keep public static
 2. `[MenuItem]`은 경로 문서화용으로 두어도 되지만, **validate가 항상 `false`** 를 반환해 메뉴를 비활성한다.
 3. Agent 실행은 Unity MCP **`execute_code`** 로 `TypeName.MethodName()` 호출.
 4. 비활성 메뉴에 `execute_menu_item`을 의존하지 않는다 (비활성 메뉴는 실행이 막힐 수 있음).
+5. Agent 전용 메뉴 경로는 `Tools/Agent/{기존카테고리}/...` 아래에 모은다 (`Tools/Agent/Recorder/Stop` 등).
 
 ```csharp
-private const string MenuPath = "Tools/Feature/Agent Only Action";
+private const string MenuPath = "Tools/Agent/Feature/Agent Only Action";
 
 [MenuItem(MenuPath)]
 public static void Run()
@@ -52,9 +53,12 @@ AgentEditorDialogGuard.PrepareSave(); // dirty 씬/프리팹 저장 후 Stage �
 - 에디터 윈도우 (`Favorite Prefab`, `Remove Missing Scripts` 등)
 - 일상 단축키/워크플로 (`Prefab Open`, `Custom Create GameObject` 등)
 
+이 도구들은 `Tools/` 직하에 그대로 두고, `Tools/Agent/` 아래로 옮기지 않는다.
+
 ## Checklist
 
 1. `public static` 진입점 있는가
 2. validate `return false` 로 메뉴 비활성인가
 3. Agent 호출 경로가 `execute_code` + 타입.메서드인가
-4. `.cursor/rules/unity-agent-editor-tools.mdc` 와 모순되지 않는가
+4. 메뉴 경로가 `Tools/Agent/...` 인가 (사용자 도구면 `Tools/` 직하)
+5. `.cursor/rules/unity-agent-editor-tools.mdc` 와 모순되지 않는가

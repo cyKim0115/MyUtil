@@ -11,12 +11,13 @@ AI/에이전트가 가끔 쓰는 일회성·재생성 Editor 도구는 **메뉴�
 ## 작성 규칙
 
 1. `public static void DoSomething()` 진입점을 둔다.
-2. `[MenuItem("Tools/...")]` 은 남겨도 되지만, 반드시 **validate MenuItem이 `false`를 반환**해 비활성한다.
+2. `[MenuItem("Tools/Agent/...")]` 은 남겨도 되지만, 반드시 **validate MenuItem이 `false`를 반환**해 비활성한다.
 3. validate 옆 주석: `Agent 전용 ... 사용자 Tools 메뉴에서는 비활성.`
-4. 사용자가 자주 쓰는 창/워크플로 도구는 활성 MenuItem을 유지한다.
+4. 사용자가 자주 쓰는 창/워크플로 도구는 활성 MenuItem을 `Tools/` 직하에 유지한다.
+5. Agent 전용 메뉴는 `Tools/Agent/{기존카테고리}/...` 아래에 모은다 (예: `Tools/Agent/Recorder`, `Tools/Agent/Webhook`).
 
 ```csharp
-private const string MenuPath = "Tools/Feature/Agent Only Action";
+private const string MenuPath = "Tools/Agent/Feature/Agent Only Action";
 
 [MenuItem(MenuPath)]
 public static void Run() { /* ... */ }
@@ -42,5 +43,7 @@ private static bool ValidateRun() => false; // Agent 전용
 
 - 에디터 윈도우 (`Favorite Prefab`, `Remove Missing Scripts` 등)
 - 일상 단축키/워크플로 (`Prefab Open`, `Custom Create GameObject` 등)
+
+즉, Agent 전용은 `Tools/Agent/...`에 모아 비활성하고, 사용자 도구는 `Tools/` 직하에 활성으로 남긴다.
 
 상세 워크플로는 `project-workflows/agent-editor-tools` 스킬을 따른다.
