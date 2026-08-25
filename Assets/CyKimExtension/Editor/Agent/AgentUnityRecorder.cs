@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Reflection;
@@ -12,6 +12,7 @@ using UnityEngine;
 /// Agent-only Unity Recorder helper. Call via MCP execute_code, e.g. AgentUnityRecorder.StartMovie(10f).
 /// Output defaults to project-root Recordings/ (gitignored). Requires Play Mode for Game View capture.
 /// 저해상도/커스텀 해상도 녹화 시 Game View selectedSizeIndex를 저장했다가 Stop/자동종료 때 원복한다.
+/// MP4 녹화가 끝나면 ffmpeg faststart 리먹스를 자동 실행한다 (ffmpeg가 없으면 원본 유지).
 /// </summary>
 public static class AgentUnityRecorder
 {
@@ -19,6 +20,11 @@ public static class AgentUnityRecorder
     private const string MenuPathStop = "Tools/Agent/Recorder/Stop";
     private const string PrefsLastOutput = "AgentUnityRecorder.LastOutputPath";
     private const string PrefsLastMode = "AgentUnityRecorder.LastMode";
+
+    private const string FaststartTempExtension = ".faststart.mp4";
+    private const int FaststartUnlockRetryCount = 20;
+    private const double FaststartRetryIntervalSeconds = 0.25;
+    private const int FaststartTimeoutMs = 60000;
 
     /// <summary>Default portrait mobile Game View size.</summary>
     public const int DefaultWidth = 1080;
@@ -31,6 +37,10 @@ public static class AgentUnityRecorder
     private static int _savedGameViewSizeIndex;
     private static bool _restoreGameViewAfterRecording;
     private static bool _watchRecordingEnd;
+
+    private static string _faststartPendingPath;
+    private static int _faststartRetriesLeft;
+    private static double _faststartNextAttemptTime;
 
     public static string DefaultOutputDirectory =>
         Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Recordings"));
@@ -200,6 +210,7 @@ public static class AgentUnityRecorder
 
         _controller = null;
         RestoreGameViewSizeIfNeeded();
+        ScheduleFaststartRemux();
         var path = GetLastOutputPath();
         return $"stopped wasRecording={wasRecording} path={path} exists={OutputExists(path)}";
     }
@@ -298,6 +309,154 @@ public static class AgentUnityRecorder
         _controller = null;
         StopWatchRecordingEnd();
         RestoreGameViewSizeIfNeeded();
+        ScheduleFaststartRemux();
+    }
+
+    /// <summary>
+    /// Unity Recorder는 moov(재생 길이·프레임 인덱스)를 파일 맨 끝에 쓴다.
+    /// 데스크톱 플레이어는 문제없지만 웹 인라인 플레이어는 앞에서부터 스트리밍하므로
+    /// moov를 만나기 전까지 길이를 몰라 0:00으로 표시한다.
+    /// 무손실 리먹스(-c copy)로 moov를 앞으로 옮겨 웹훅·브라우저에서 바로 재생되게 한다.
+    /// 먹서가 moov를 다 쓸 때까지 파일이 잠겨 있으므로 열릴 때까지 기다렸다 처리한다.
+    /// </summary>
+    private static void ScheduleFaststartRemux()
+    {
+        var path = GetLastOutputPath();
+        if (string.IsNullOrEmpty(path) ||
+            !path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _faststartPendingPath = path;
+        _faststartRetriesLeft = FaststartUnlockRetryCount;
+        _faststartNextAttemptTime = EditorApplication.timeSinceStartup;
+
+        EditorApplication.update -= UpdateFaststartRemux;
+        EditorApplication.update += UpdateFaststartRemux;
+    }
+
+    private static void UpdateFaststartRemux()
+    {
+        if (EditorApplication.timeSinceStartup < _faststartNextAttemptTime)
+            return;
+
+        _faststartNextAttemptTime =
+            EditorApplication.timeSinceStartup + FaststartRetryIntervalSeconds;
+
+        var path = _faststartPendingPath;
+        var unlocked = CanOpenExclusive(path);
+        if (!unlocked && --_faststartRetriesLeft > 0)
+            return;
+
+        EditorApplication.update -= UpdateFaststartRemux;
+        _faststartPendingPath = null;
+
+        if (!unlocked)
+        {
+            Debug.LogWarning(
+                $"[AgentUnityRecorder] 녹화 파일이 계속 잠겨 있어 faststart 리먹스를 건너뜁니다: {path}");
+            return;
+        }
+
+        if (TryRemuxFaststart(path, out var error))
+        {
+            Debug.Log($"[AgentUnityRecorder] faststart 리먹스 완료: {path}");
+            return;
+        }
+
+        Debug.LogWarning(
+            $"[AgentUnityRecorder] faststart 리먹스 실패 — {error}. " +
+            $"웹 플레이어에서 길이가 0:00으로 보일 수 있습니다. 원본은 그대로 둡니다: {path}");
+    }
+
+    private static bool CanOpenExclusive(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            return false;
+
+        try
+        {
+            using var stream = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            return stream.Length > 0;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
+
+    private static bool TryRemuxFaststart(string path, out string error)
+    {
+        var tempPath = Path.ChangeExtension(path, FaststartTempExtension);
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments =
+                    $"-v error -y -i \"{path}\" -c copy -movflags +faststart \"{tempPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+            {
+                error = "ffmpeg 프로세스를 시작하지 못했습니다";
+                return false;
+            }
+
+            // stderr만 리다이렉트하므로 WaitForExit 전에 먼저 읽어야 파이프가 막히지 않는다.
+            var stderr = process.StandardError.ReadToEnd();
+            if (!process.WaitForExit(FaststartTimeoutMs))
+            {
+                process.Kill();
+                error = "ffmpeg 응답 없음(timeout)";
+                return false;
+            }
+
+            if (process.ExitCode != 0)
+            {
+                error = string.IsNullOrWhiteSpace(stderr)
+                    ? $"ffmpeg exit={process.ExitCode}"
+                    : stderr.Trim();
+                return false;
+            }
+
+            // 원본을 먼저 지우면 교체 실패 시 방금 녹화한 영상이 사라진다.
+            // 백업으로 물러뒀다가 교체가 끝난 뒤에 지우고, 실패하면 원복한다.
+            var backupPath = path + ".bak";
+            if (File.Exists(backupPath))
+                File.Delete(backupPath);
+
+            File.Move(path, backupPath);
+            try
+            {
+                File.Move(tempPath, path);
+            }
+            catch
+            {
+                File.Move(backupPath, path);
+                throw;
+            }
+
+            File.Delete(backupPath);
+            error = null;
+            return true;
+        }
+        catch (Exception e)
+        {
+            // ffmpeg가 PATH에 없으면 Win32Exception. 리먹스는 선택 단계이므로 원본을 유지한다.
+            error = e.Message;
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+                File.Delete(tempPath);
+        }
     }
 
     private static bool TryGetGameViewSelectedSizeIndex(out int index)

@@ -136,6 +136,8 @@ AgentUnityRecorder.Stop();
 ```
 
 - Agent 전용(메뉴 비활성). 호출: MCP `execute_code`
+- 기본값과 다른 해상도로 녹화하면 종료 시 Game View 사이즈를 자동 원복한다
+- MP4 종료 시 `ffmpeg -c copy -movflags +faststart` 무손실 리먹스를 자동 실행해 웹 플레이어에서 길이가 0:00으로 보이는 문제를 막는다 (ffmpeg가 PATH에 없으면 경고만 남기고 원본 유지)
 - 워크플로 스킬: `unity-recorder`
 
 ## 📦 요구사항
@@ -161,6 +163,7 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 
 #### Unity Recorder
 - Package Manager: `com.unity.recorder` (AgentUnityRecorder용, 이미 `Packages/manifest.json`에 포함)
+- (선택) `ffmpeg` — PATH에 있으면 녹화 종료 후 faststart 리먹스 자동 실행. 없어도 녹화는 정상 동작
 
 #### Cursor IDE Support
 - https://github.com/boxqkrtm/com.unity.ide.cursor

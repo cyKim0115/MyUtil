@@ -32,11 +32,27 @@ Play Mode에서 Game View(또는 태그 카메라)를 MP4 / PNG 시퀀스로 녹
 | 소스 | Game View (UI 포함) |
 | 길이 | `durationSeconds` (≤0이면 수동, `Stop` 필요) |
 
+## faststart 리먹스 (자동)
+
+Unity Recorder는 `moov`(재생 길이·프레임 인덱스)를 파일 **맨 끝**에 쓴다. 데스크톱 플레이어는 문제없지만
+웹 인라인 플레이어(웹훅 미리보기 등)는 앞에서부터 스트리밍하므로 `moov`를 만나기 전까지 길이를 몰라
+**0:00으로 표시**한다. 파일이 깨진 게 아니라 아톰 배치 문제다.
+
+그래서 `Stop()`·TimeInterval 자동 종료 양쪽에서 `ffmpeg -c copy -movflags +faststart` **무손실 리먹스**를
+자동 실행해 `moov`를 앞으로 옮긴다. 재인코딩이 아니라 화질·길이는 그대로다.
+
+- 먹서가 `moov`를 다 쓸 때까지 파일이 잠겨 있으므로, 열릴 때까지 기다렸다 처리한다 (최대 5초).
+- 성공 시 `[AgentUnityRecorder] faststart 리먹스 완료` 로그.
+- **ffmpeg가 PATH에 없으면** 경고만 남기고 **원본을 그대로 둔다** (선택 단계라 녹화 자체는 실패하지 않는다).
+  이 경우 웹 플레이어에서 0:00으로 보이므로 공유 전에 수동 리먹스한다:
+  `ffmpeg -i in.mp4 -c copy -movflags +faststart out.mp4`
+
 ## Prerequisites
 
 1. Unity Editor 연결 (MCP / Unity Skills).
 2. **Play Mode** 진입 — Game View 녹화 전제. `manage_editor(action: "play")`.
 3. `com.unity.recorder` 패키지 설치.
+4. (선택) `ffmpeg`가 PATH에 있으면 종료 후 faststart 리먹스가 자동 실행된다.
 
 ## Workflow — timed MP4 (권장)
 
@@ -128,6 +144,7 @@ WebhookFeedback.SendRecording(@"C:\path\to\Recordings\verify_clip.mp4", "제목"
 - [ ] `duration + buffer` 대기 후 `exists=true`인가
 - [ ] 사용자에게 **절대 경로** (`Recordings/...`) 안내했는가
 - [ ] 녹화 파일을 스테이징하지 않았는가
+- [ ] 웹 미리보기용이면 faststart 리먹스 로그(완료/실패)를 확인했는가
 
 ## Related
 
