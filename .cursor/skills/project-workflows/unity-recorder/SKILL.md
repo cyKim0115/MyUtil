@@ -19,7 +19,7 @@ Play Mode에서 Game View(또는 태그 카메라)를 MP4 / PNG 시퀀스로 녹
 - “녹화해줘”, “MP4로 뽑아줘”, “이미지 시퀀스”, “Unity Recorder로 …”
 - 연출/UI 검증용 짧은 클립이 필요할 때
 
-스크린샷 1장만이면 이 스킬 대신 `manage_camera` screenshot / `webhook-screenshot-feedback`을 쓴다.
+스크린샷 1장만이면 이 스킬 대신 `manage_camera` screenshot 을 쓰고, 전송은 전역 스킬 `webhook-report`에 맡긴다.
 
 ## Defaults
 
@@ -120,11 +120,14 @@ return AgentUnityRecorder.StartMovie(6f, cameraTag: "MainCamera");
 
 ## Webhook
 
-짧은 실패/검증 클립을 보낼 때는 `webhook-report-media` 판단 후:
+짧은 실패/검증 클립은 **전역 스킬 `webhook-report`**로 보낸다. 매체 판단표도 그쪽에 있다.
+녹화만 이 스킬이 맡고, 전송은 전역 스킬 소관이다 — Unity Editor가 떠 있을 필요가 없다.
 
-```csharp
-using WebhookFeedbackSystem;
-WebhookFeedback.SendRecording(@"C:\path\to\Recordings\verify_clip.mp4", "제목", "설명");
+```bash
+python3 ~/.claude/skills/webhook-report/send_webhook.py \
+  --key <프로젝트 룰이 지정한 키> \
+  --title "연출 - 검증 클립" --description "설명" \
+  --file Recordings/verify_clip.mp4
 ```
 
 ## Do / Don't
@@ -135,7 +138,7 @@ WebhookFeedback.SendRecording(@"C:\path\to\Recordings\verify_clip.mp4", "제목"
 | 출력은 `Recordings/` | `Assets/` 안에 대용량 영상 저장 |
 | 완료 후 경로만 안내 | 녹화 파일을 커밋 |
 | 단발 스크린샷은 screenshot 경로 | Recorder로 1프레임만 대체 |
-| 성공 리포트마다 긴 MP4 웹훅 | `webhook-report-media` 위반 |
+| 성공 리포트마다 긴 MP4 웹훅 | `webhook-report`의 매체 판단표 위반 |
 
 ## Checklist
 
@@ -148,7 +151,6 @@ WebhookFeedback.SendRecording(@"C:\path\to\Recordings\verify_clip.mp4", "제목"
 
 ## Related
 
-- `webhook-report-media` — text / screenshot / recording 판단
-- `webhook-screenshot-feedback` — 웹훅 전송 API
+- 전역 스킬 `webhook-report` — 매체 판단(text / screenshot / recording) + 전송
 - `agent-editor-tools` — Agent 전용 static / MenuItem validate false
 - 구현: `Assets/CyKimExtension/Editor/Agent/AgentUnityRecorder.cs`

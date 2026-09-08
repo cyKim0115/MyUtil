@@ -120,10 +120,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 | `project-workflows/agent-editor-tools/` | same | Generic examples only |
 | `project-workflows/editor-tool-doc-writing/` | same | If present and general |
 | `project-workflows/korean-git-commit/` | same | Keep this repo’s labels/examples |
-| `project-workflows/webhook-screenshot-feedback/` | same | Hub path → `Assets/CyKimExtension/Editor/Agent/Webhook/` |
-| `project-workflows/webhook-report-media/` | same | Drop source-game playtest IDs; keep decision table |
 | `project-workflows/unity-recorder/` | same | Path → `AgentUnityRecorder`; drop game ForceEnter / map-pan examples |
-| `project-workflows/screenshot-folder-cleanup/` | same | Uses `WebhookFeedback.ClearScreenshotsFolder` |
 | `project-workflows/particle-effect-controller/` | same | MyUtil 우선. 소스에 없으면 유지만 하고 삭제하지 않음 |
 
 ### This-repo only
@@ -136,7 +133,7 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `blender-community/**`, Blender MCP workflows
 - popup / manager-pooling / user-data-schema / building-presentation / spreadsheet agent workflows
 - `project-onboarding/**`
-- `project-workflows/discord-screenshot-feedback/` (deprecated alias; use `webhook-screenshot-feedback`)
+- 웹훅 보고 스킬 일체 — 2026-09-08에 전역 스킬 `webhook-report`로 이관됨. 소스에 남아 있어도 동기화하지 않는다
 - `project-workflows/agent-playtest/`, `project-workflows/editor-playtest/` — game bootstrap / domain scenarios (B/C)
 - Source `Cheat/AgentPlaytest/**`, `Editor/Agent/Playtest/**` — playtest orchestration stays in host games
 - `project-workflows/grouped-git-commit/`, `git-commit-on-finish` rule — maintained outside this util library
