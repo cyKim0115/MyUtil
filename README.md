@@ -123,7 +123,9 @@ WebhookFeedback.ClearScreenshotsFolder(); // 전송 후 Assets/Screenshots 정�
 
 - Secrets: `discord_webhook_url.txt`, `slack_webhook_url.txt`, `webhook_active_provider.txt` (`Discord` | `Slack` | `Both`)
 - 메뉴 `Tools/Agent/Webhook/...`는 Agent 전용(비활성)
-- 워크플로 스킬: `webhook-screenshot-feedback`, `webhook-report-media`, `screenshot-folder-cleanup`
+- ⚠️ **에이전트 보고에는 쓰지 않는다.** 2026-09-08부터 전역 스킬 `webhook-report`(python3)가
+  매체 판단과 전송을 모두 맡는다. Unity Editor 없이 동작한다. 이 C# API는 사람이 Unity 안에서
+  직접 호출할 때만 쓴다.
 
 #### Agent Unity Recorder (`AgentUnityRecorder`)
 

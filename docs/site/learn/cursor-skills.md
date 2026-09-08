@@ -18,7 +18,6 @@ icon: wand-magic-sparkles
 | `korean-git-commit` | 커밋 메시지 작성 | 「커밋해줘」 |
 | `editor-tool-doc-writing` | 에디터 도구 사용 가이드 MD 작성 | 새 Tools 창 문서화 |
 | `agent-editor-tools` | Agent 전용 Editor 도구 추가·호출 | 일회성 셋업/재생성 |
-| `webhook-screenshot-feedback` | Discord/Slack으로 텍스트·스크린샷 피드백 | 「피드백 보내」 |
 | `sync-from-source` | 다른 Unity 프로젝트에서 범용 자산 동기화 | `최신화` |
 | `particle-effect-controller` | 멀티 이미터 FX 루트 컨트롤러 | 부모 Stop이 자식을 끄는지 |
 
@@ -57,19 +56,16 @@ Agent가 **가끔** 돌리는 Editor 일회성 도구의 작성·호출 패턴�
 
 사람용 플레이북: [Agent 전용 Editor 도구](../playbooks/agent-editor-tools.md)
 
-### webhook-screenshot-feedback
+### 웹훅 보고는 어디로 갔나
 
-Game View 스크린샷·텍스트·짧은 녹화를 **Discord / Slack 웹훅**으로 보냅니다.
+2026-09-08에 웹훅 보고 스킬 3종(`webhook-screenshot-feedback`, `webhook-report-media`,
+`screenshot-folder-cleanup`)을 **전역 스킬 `webhook-report`**로 옮겼습니다.
+매체 판단(text / screenshot / recording)과 전송이 모두 그쪽에 있습니다.
 
-- URL·활성 프로바이더는 `Secrets/`(gitignore)
-- API 허브: `WebhookFeedback` — 전송 로직을 매번 새로 짜지 않음
-- 메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)
-
-개념·API 요약: [에디터 도구](editor-tools.md)의 WebhookFeedback 절
-
-### webhook-report-media
-
-웹훅 보고 시 **text / screenshot / recording** 중 무엇을 붙일지 판단합니다. 전송 API는 `webhook-screenshot-feedback`을 따릅니다.
+옛 방식은 Unity Editor가 떠 있어야만 동작해서 헤드리스 워커나 Editor가 닫힌
+세션에서는 보고가 통째로 죽었습니다. 지금은 python3 스크립트 하나로 Unity와
+무관하게 전송됩니다. C# 허브 `WebhookFeedback`은 라이브러리 자산으로 남아
+있습니다 — 개념·API 요약은 [에디터 도구](editor-tools.md)를 보세요.
 
 ### unity-recorder
 

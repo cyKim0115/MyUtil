@@ -38,7 +38,14 @@ WebhookFeedback.SendRecording(@"Recordings/clip.mp4", "제목", "설명");
 | `slack_webhook_url.txt` | Slack webhook URL |
 | `webhook_active_provider.txt` | `Discord` / `Slack` / `Both` |
 
-메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)입니다. 매체 선택은 `webhook-report-media`, 전송은 `webhook-screenshot-feedback`.
+메뉴 `Tools/Agent/Webhook/Send Feedback`는 Agent 전용(비활성)입니다.
+
+{% hint style="warning" %}
+**에이전트 보고에는 이 C# 허브를 쓰지 않습니다.** 2026-09-08부터 매체 선택과 전송은
+모두 전역 스킬 `webhook-report`(python3) 소관입니다. Unity Editor가 떠 있어야만
+동작하던 제약이 없어졌습니다. 이 절의 `WebhookFeedback` API는 **사람이 Unity 안에서
+직접 호출할 때만** 쓰는 라이브러리 자산으로 남습니다.
+{% endhint %}
 
 ## AgentUnityRecorder
 
