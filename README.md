@@ -36,6 +36,7 @@ string platform = PlatformUtil.GetPlatformType(); // Editor / iOS / Android
 
 ```csharp
 string text = 1500f.FormatWithUnits(); // "1.5a"
+string rate = 8.6421.FormatDecimalWithUnits(); // "8.64" (1000 이상은 FormatWithUnits)
 double value = "1.5a".GetUnitValue();
 string time = 3661L.FormatTime(); // "1h 1m"
 bool hit = 30f.ProbabilitySimulate_Percent();
@@ -93,6 +94,7 @@ Inspector에서 필드를 읽기 전용으로 만듭니다.
 | GameObject/Custom Create GameObject | Empty/UI 생성 (`Ctrl/Cmd+Shift+N`) |
 | Tools/Data/Data Path Open | persistentDataPath 탐색기 열기 |
 | **F12** (Inspector Component Shortcut) | 선택 객체가 TMP면 텍스트 입력 포커스, Image면 Source Image 선택 창 |
+| (자동) `EditorPlayModeRunInBackground` | 에디터 Play 중에는 `Application.runInBackground`를 켜서 포커스가 없어도 시뮬레이션이 돈다 (빌드 설정과 무관) |
 
 #### Agent 에디터 가드 (`AgentEditorDialogGuard`)
 
@@ -106,6 +108,24 @@ AgentEditorDialogGuard.PrepareDiscard(); // 변경 폐기 후 Stage 닫기
 AgentEditorDialogGuard.SaveOpenPrefabStageWithoutClosing();
 AgentEditorDialogGuard.SaveAssetsRespectingOpenPrefabStage(); // Stage 열려있으면 Refresh 생략
 ```
+
+#### Agent 씬 리로드 모달 해제 (`AgentSceneDirtyBeacon` + `unity-modal.py`)
+
+git pull·브랜치 전환으로 열린 씬 파일이 바뀌면 Unity가 「The open scene(s) have been modified externally」(Reload / Ignore) 네이티브 모달을 띄운다. 이 모달은 C#으로 막을 수 없고, MCP 서버도 막힌 메인 스레드 안에서 돌아 MCP 호출이 전부 타임아웃된다. 바깥 파이썬 프로세스가 Win32 메시지(`BM_CLICK`)로 버튼을 누른다. 포커스·마우스는 쓰지 않는다.
+
+- `AgentSceneDirtyBeacon` (`[InitializeOnLoad]`, 호출 없음): 열린 씬·Prefab Stage의 dirty 여부와 Play 여부를 `Temp/AgentSceneDirty.json`에 적는다. 메인 에디터에서만 돈다(에셋 임포트 워커 제외). 스크립트 경로도 함께 적어, 브랜치 전환으로 스크립트가 빠지면 도구가 낡은 기록을 믿지 않는다.
+- `Editor/Agent/Tools~/unity-modal.py` (Windows, 파이썬 표준 라이브러리만): `Tools~`는 Unity가 임포트하지 않는다.
+
+```bash
+python Assets/CyKimExtension/Editor/Agent/Tools~/unity-modal.py            # 모달·진행 창 목록 + 씬 dirty 상태
+python Assets/CyKimExtension/Editor/Agent/Tools~/unity-modal.py --reload   # 씬 리로드 모달이면 Reload (열린 씬이 모두 저장 상태일 때만)
+python Assets/CyKimExtension/Editor/Agent/Tools~/unity-modal.py --wait 60 --reload
+```
+
+- 종료 코드: 0 = 모달 없음·처리함, 2 = 사람 판단 필요(dirty·Play 중·상태 모름), 1 = 오류
+- **Ignore는 누르지 않는다.** 메모리의 옛 씬을 나중에 저장하면 git으로 받은 변경을 덮어쓴다. Reload는 저장 안 된 편집만 잃는다.
+- 컴파일·임포트 진행 창(`Hold on...`, `Reloading Domain`)은 진행 막대가 있어 모달로 치지 않고 기다린다.
+- 에이전트 지침 한 줄 예: 「MCP 호출이 전부 타임아웃이면 `unity-modal.py`로 모달부터 확인하고, 씬 리로드면 `--reload`, 종료 코드 2면 사용자에게 묻는다.」
 
 #### Agent 웹훅 피드백 (`WebhookFeedback`)
 
