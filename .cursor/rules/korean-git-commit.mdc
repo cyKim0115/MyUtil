@@ -7,6 +7,8 @@ alwaysApply: true
 
 커밋 메시지 작성·요청 시 반드시 이 형식을 따른다. 상세 체크리스트는 `.cursor/skills/project-workflows/korean-git-commit/SKILL.md`를 참고한다.
 
+지시 끝에 `+커푸`가 있으면 작업 후 **커밋+푸시**까지 수행한다 (force push 금지). 절차는 위 스킬의 `+커푸` 절.
+
 ## Format
 
 ```text

@@ -38,6 +38,23 @@ private static bool ValidateRun() => false; // Agent 전용
 | `AgentEditorDialogGuard` | `PrepareSave` / `PrepareDiscard` (씬·프리팹 dirty 정리, 모달 팝업 예방) |
 | `WebhookFeedback` | `Send` / `SendText` / `SendRecording` / `ClearScreenshotsFolder` |
 | `AgentUnityRecorder` | `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` |
+| `AgentSceneDirtyBeacon` | 호출 없음(`[InitializeOnLoad]`). 열린 씬·Prefab Stage의 dirty 상태를 `Temp/AgentSceneDirty.json`에 적어 둔다. 아래 `unity-modal.py`가 읽는다 |
+
+## MCP가 전부 타임아웃일 때 — 네이티브 모달
+
+Unity 네이티브 모달(씬 리로드 대화상자 등)이 뜨면 에디터 메인 스레드가 막혀 MCP 호출이 전부 타임아웃된다. MCP로는 풀 수 없으니 바깥 Python 도구를 쓴다 (Windows).
+
+- 확인: `python Assets/CyKimExtension/Editor/Agent/Tools~/unity-modal.py` — 모달·진행 창 목록과 씬 dirty 상태를 보여 준다. (`Tools~`는 Unity가 임포트하지 않는다.)
+- 씬 리로드 모달(「modified externally」): `--reload`. 비콘 기준으로 열린 씬이 **모두 저장 상태일 때만** Reload를 누른다.
+- 종료 코드 2 = 모달이 남아 판단이 필요하다 → 사용자에게 묻는다. `--force`·`--click`은 사용자 확인 뒤에만 쓴다.
+- **Ignore는 누르지 않는다.** 메모리에 남은 옛 씬이 나중에 저장되면서 git으로 받은 변경을 덮어쓴다.
+
+## 셋업 잔여·멱등
+
+- 기존 프리팹·UI를 복사해 셋업하면 남은 스프라이트 GUID·`m_MethodName`·비활성 오브젝트를 셋업이 정리한다. 반복 셀은 가능하면 코드로 새로 만든다.
+- 셋업은 멱등이다. 두 번 실행해도 오브젝트·이벤트가 늘지 않는다.
+- private `UnityEvent`는 리플렉션(`BindingFlags.NonPublic`) 대신 `SerializedObject`로 `m_PersistentCalls`를 쓴다. `GetComponent` 대신 `TryGetComponent`.
+- `*_setup_done` 같은 마커 파일을 만들지 않는다.
 
 ## 활성 MenuItem을 유지하는 경우
 

@@ -49,6 +49,7 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Editor/RandomPrefabScatterWindow.cs` | `Editor/RandomPrefabScatterWindow.cs` |
 | `Editor/InspectorComponentShortcut.cs` | `Editor/InspectorComponentShortcut.cs` |
 | `Editor/AgentEditorDialogGuard.cs` | `Editor/AgentEditorDialogGuard.cs` |
+| `Editor/AgentSceneDirtyBeacon.cs` | `Editor/AgentSceneDirtyBeacon.cs` |
 
 ### Extra tracked (relative to `SYNC_SOURCE_ROOT`, not util scripts root)
 
@@ -63,10 +64,16 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Assets/GameResource/Script/Editor/Agent/Webhook/DiscordWebhookTransport.cs` | `Editor/Agent/Webhook/DiscordWebhookTransport.cs` |
 | `Assets/GameResource/Script/Editor/Agent/Webhook/SlackWebhookTransport.cs` | `Editor/Agent/Webhook/SlackWebhookTransport.cs` |
 | `Assets/GameResource/Script/Editor/AgentUnityRecorder.cs` | `Editor/Agent/AgentUnityRecorder.cs` |
+| `Assets/GameResource/Script/Editor/EditorPlayModeRunInBackground.cs` | `Editor/EditorPlayModeRunInBackground.cs` |
+| `.claude/tools/unity-modal.py` | `Editor/Agent/Tools~/unity-modal.py` |
 
 Note: When syncing `AgentUnityRecorder`, **strip game-coupled APIs** (e.g. map pan / project camera controllers). Keep `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` only.
 
 Note: `AgentUnityRecorder`의 ffmpeg faststart 리먹스(`ScheduleFaststartRemux` / `TryRemuxFaststart`)는 프로젝트 의존이 없어 추적 대상이다. ffmpeg가 없으면 경고 후 원본을 유지하는 동작을 그대로 지킨다.
+
+Note: `unity-modal.py`는 `AgentSceneDirtyBeacon`과 짝이다(비컨이 `Temp/AgentSceneDirty.json`에 적은 dirty 상태로 씬 리로드 모달의 Reload를 누를지 판단). 둘은 함께 갱신한다. 스크립트는 `--project`, 자기 위치, 현재 폴더 순으로 `Assets`+`ProjectSettings` 폴더를 찾으므로 그대로 복사한다. `Tools~`는 Unity가 임포트하지 않아 `.meta`가 생기지 않는다.
+
+Note: `LanguageUtil.cs`(소스는 프로젝트 PlayerPrefs 래퍼 의존), `Editor/DataPathUtil.cs`(소스는 세이브 데이터 경로 의존)는 이 라이브러리 버전(`PlayerPrefs`·`Application.persistentDataPath`)을 유지한다. 소스의 다른 변경만 골라 반영한다.
 
 Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, use `SYNC_SOURCE_EXTRA_DRAWER_REL` and sync into `Editor/SerializableDictionaryDrawer.cs`.
 
@@ -86,6 +93,9 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `Editor/OneMobilePopFontAtlasSetup.cs` (project font path)
 - `Editor/AnimationClipPathRemapper.cs`, `Editor/AnimationClipPathRemapEditorWindow.cs` (소스 사본. MyUtil은 서브모듈 `Editor/Animation/`을 단일 소스로 쓴다)
 - `Editor/Agent/DiscordFeedbackSender.cs` (source-only Discord 하위 호환 래퍼; MyUtil은 `WebhookFeedback`만 유지)
+- `Editor/AddressableUnusedEntrySweeper.cs` (소스 테이블 캐시·스크립트 경로와 문자열 주소 규칙에 묶임. 일반화하려면 경로·토큰 수집을 설정으로 빼야 함)
+- `Editor/FloorBlockScatterUtility.cs`, 소스 `RandomPrefabScatterWindow`의 바닥 머티리얼 모드 (도메인 바닥 블록 파이프라인. 프리팹 스캐터만 유지)
+- 소스 `Editor/Agent/AgentCaptureRun.cs` (원격 워커 잡 계약·프로젝트 씬에 묶임)
 - Anything under Blender / Island / Building / character-domain folders outside util
 
 ## Cursor rules

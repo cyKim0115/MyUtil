@@ -18,7 +18,7 @@ alwaysApply: true
 - `-executeMethod`, `-quit`, `-nographics` 조합
 - 열린 Editor와 같은 프로젝트를 임시 복사본으로 돌려 batchmode 우회 시도
 
-이유: `Library/`, `Temp/`, `.meta` 잠금·경합, import 꼬임, 생성물 유실.
+이유: `Library/`, `Temp/`, `.meta` 잠금·경합, import 꼬임, 생성물 유실. batchmode 자체가 나쁜 것이 아니라 Editor가 상시 열려 있어서 생긴 금지다.
 
 batchmode가 유일한 수단처럼 보이면 **사용자에게 Editor에서 메뉴 실행을 요청**한다.
 
@@ -29,6 +29,18 @@ batchmode가 유일한 수단처럼 보이면 **사용자에게 Editor에서 메
 | 사용자용 활성 Editor 메뉴 실행 | Unity Skills / MCP `execute_menu_item` (`menuPath="Tools/..."`) |
 | Agent 전용·일회성 셋업/최적화 | `public static` 메서드를 MCP `execute_code`로 직접 호출 |
 | 컴파일·콘솔 확인 | Unity Skills / MCP console·debug 도구 |
+| 리플렉션 호출·스크린샷·프로파일러 | 해당 기능을 가진 Unity MCP 서버 (예: ai-game-developer) |
+| 짧은 명령·식 평가 | Unity CLI `unity command`, `unity eval` (localhost로 실행 중 Editor에 붙는다. batchmode가 아니다) |
+
+MCP 호출이 전부 타임아웃이면 Unity 네이티브 모달부터 의심한다. 절차는 `unity-agent-editor-tools` 룰의 「MCP가 전부 타임아웃일 때」.
+
+## 다른 Unity 프로젝트
+
+Editor가 열려 있는 그 프로젝트가 아닌 별도 Unity 프로젝트는 `Library/`를 공유하지 않으므로 위 금지 대상이 아니다. 실행 전에 확인한다.
+
+1. 대상 프로젝트의 Editor가 꺼져 있다 (`~/.unity-mcp/unity-mcp-status-*.json`의 `project_path` 등으로 확인)
+2. 그 저장소가 batchmode를 정식 경로로 문서화했다 (스크립트 + README)
+3. 실행 후 exit code, 로그, 산출물을 확인한다
 
 ## Editor 도구 작성 규칙
 

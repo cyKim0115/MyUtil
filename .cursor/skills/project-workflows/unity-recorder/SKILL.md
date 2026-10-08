@@ -19,7 +19,7 @@ Play Mode에서 Game View(또는 태그 카메라)를 MP4 / PNG 시퀀스로 녹
 - “녹화해줘”, “MP4로 뽑아줘”, “이미지 시퀀스”, “Unity Recorder로 …”
 - 연출/UI 검증용 짧은 클립이 필요할 때
 
-스크린샷 1장만이면 이 스킬 대신 `manage_camera` screenshot 을 쓰고, 전송은 전역 스킬 `webhook-report`에 맡긴다.
+스크린샷 1장만이면 이 스킬 대신 Play 중 `ScreenCapture.CaptureScreenshot` 또는 Game View 스크린샷 MCP 도구(예: ai-game-developer `screenshot-game-view`)를 쓰고, 전송은 전역 스킬 `webhook-report`에 맡긴다. 카메라 렌더 기반 캡처(`manage_camera` 등)는 UI 캔버스가 빠질 수 있어 UI 증거로 쓰지 않는다.
 
 ## Defaults
 
@@ -46,6 +46,7 @@ Unity Recorder는 `moov`(재생 길이·프레임 인덱스)를 파일 **맨 끝
 - **ffmpeg가 PATH에 없으면** 경고만 남기고 **원본을 그대로 둔다** (선택 단계라 녹화 자체는 실패하지 않는다).
   이 경우 웹 플레이어에서 0:00으로 보이므로 공유 전에 수동 리먹스한다:
   `ffmpeg -i in.mp4 -c copy -movflags +faststart out.mp4`
+- 검증: `moov`가 `mdat`보다 앞 offset인지 확인한다.
 
 ## Prerequisites
 
@@ -53,15 +54,17 @@ Unity Recorder는 `moov`(재생 길이·프레임 인덱스)를 파일 **맨 끝
 2. **Play Mode** 진입 — Game View 녹화 전제. `manage_editor(action: "play")`.
 3. `com.unity.recorder` 패키지 설치.
 4. (선택) `ffmpeg`가 PATH에 있으면 종료 후 faststart 리먹스가 자동 실행된다.
+5. 에디터 포커스가 없어도 Play가 진행되도록 Player Settings `Run In Background`를 켜 둔다.
 
 ## Workflow — timed MP4 (권장)
 
 ```
-1. Play Mode 진입
+1. Play Mode 진입 (+ 필요 시 목표 화면까지 진입·연출 대기)
 2. execute_code → AgentUnityRecorder.StartMovie(durationSeconds)
-3. duration + 2~3초 대기 (TimeInterval 자동 종료)
+3. duration + 2~3초 대기 (TimeInterval 자동 종료). 대기 중 가림 팝업이 뜨면 닫고 진행
 4. execute_code → AgentUnityRecorder.GetStatus() 또는 Stop()
 5. path의 .mp4 존재 확인 후 사용자에게 경로 안내
+6. Play Mode는 사용자가 계속 볼 때만 유지, 아니면 종료
 ```
 
 ### execute_code 예
@@ -115,6 +118,7 @@ return AgentUnityRecorder.StartMovie(6f, cameraTag: "MainCamera");
 ## Waiting
 
 - `TimeInterval`은 Recorder가 종료한다. Agent는 **블로킹 루프를 Editor에 돌리지 말고** 채팅 쪽에서 `duration + 2~3s` 대기 후 `GetStatus`/`Stop`한다.
+- 녹화 대상을 가리는 팝업(해금·보상 알림 등)이 뜨면 녹화를 중단하지 말고 프로젝트 방식으로 닫은 뒤 이어간다. 팝업 자체가 녹화 목표면 닫지 않는다. `duration`을 한 번에 기다리지 말고 중간에 확인한다.
 - Domain reload / Play 종료 시 컨트롤러 static은 날아갈 수 있다. 마지막 경로는 `EditorPrefs`에 남으므로 `GetLastOutputPath()` / `GetStatus()`로 확인한다.
 - 해상도를 기본값(1080×1920)과 다르게 지정하면 시작 시 Game View `selectedSizeIndex`를 저장했다가, `Stop()` 또는 `TimeInterval` 자동 종료 때(Agent가 `Stop`을 호출하지 않아도) 자동 원복한다. 별도 처리 불필요.
 
@@ -139,6 +143,7 @@ python3 ~/.claude/skills/webhook-report/send_webhook.py \
 | 완료 후 경로만 안내 | 녹화 파일을 커밋 |
 | 단발 스크린샷은 screenshot 경로 | Recorder로 1프레임만 대체 |
 | 성공 리포트마다 긴 MP4 웹훅 | `webhook-report`의 매체 판단표 위반 |
+| 녹화 중 가림 팝업은 닫고 진행 | 가림 팝업 때문에 녹화를 중단하거나 덮인 채로 방치 |
 
 ## Checklist
 

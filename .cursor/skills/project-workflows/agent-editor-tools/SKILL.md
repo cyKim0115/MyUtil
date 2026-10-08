@@ -46,6 +46,15 @@ SomeSetupTool.Run();
 AgentEditorDialogGuard.PrepareSave(); // dirty 씬/프리팹 저장 후 Stage 닫기
 ```
 
+MCP 호출이 전부 타임아웃이면 네이티브 모달이 메인 스레드를 막은 것일 수 있다. `python Assets/CyKimExtension/Editor/Agent/Tools~/unity-modal.py`로 확인하고, 씬 리로드 모달은 `--reload`(비콘 `AgentSceneDirtyBeacon` 기준 열린 씬이 모두 저장 상태일 때만 누름). 종료 코드 2면 사용자에게 묻고, Ignore는 누르지 않는다. 상세는 `.cursor/rules/unity-agent-editor-tools.mdc`.
+
+## 셋업 잔여·멱등
+
+- 기존 프리팹·UI를 복사해 셋업하면 남은 스프라이트 GUID·`m_MethodName`·비활성 오브젝트를 셋업이 정리한다. 반복 셀은 가능하면 코드로 새로 만든다.
+- 셋업은 멱등이다. 두 번 실행해도 오브젝트·이벤트가 늘지 않는다.
+- private `UnityEvent`는 리플렉션(`BindingFlags.NonPublic`) 대신 `SerializedObject`로 `m_PersistentCalls`를 쓴다. `GetComponent` 대신 `TryGetComponent`.
+- `*_setup_done` 같은 마커 파일을 만들지 않는다.
+
 ## 활성 MenuItem을 유지하는 경우
 
 사용자가 직접·자주 여는 도구만 활성으로 둔다.
@@ -62,3 +71,7 @@ AgentEditorDialogGuard.PrepareSave(); // dirty 씬/프리팹 저장 후 Stage �
 3. Agent 호출 경로가 `execute_code` + 타입.메서드인가
 4. 메뉴 경로가 `Tools/Agent/...` 인가 (사용자 도구면 `Tools/` 직하)
 5. `.cursor/rules/unity-agent-editor-tools.mdc` 와 모순되지 않는가
+6. 복사 잔여(스프라이트 GUID·`m_MethodName`·비활성 오브젝트)를 셋업이 정리하는가
+7. 두 번 실행해도 오브젝트·이벤트가 늘지 않는가
+8. private `UnityEvent`는 `SerializedObject`의 `m_PersistentCalls`인가. `TryGetComponent`인가
+9. `*_setup_done` 마커 파일이 없는가

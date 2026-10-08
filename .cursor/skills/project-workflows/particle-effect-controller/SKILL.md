@@ -21,7 +21,7 @@ FX_Root            ParticleSystem + ParticleSystemRenderer.enabled = false
   Emitter_B        ParticleSystem (실제 그리기)
 ```
 
-- 루트 렌더러는 꺼 둔다. Emission rate는 **0**이 깔끔하다.
+- 루트 렌더러는 꺼 둔다. Emission rate는 **0**이 깔끔하다 (렌더러가 꺼져 있으면 안 보이지만 불필요한 시뮬레이션을 줄인다).
 - Sub Emitters가 아니다. 자식은 독립 이미터이고, **계층 Play/Stop 묶음**만 공유한다.
 
 ## API (기본값 `withChildren: true`)
