@@ -60,6 +60,14 @@ namespace Util
             return FormatWithUnits(dNumber);
         }
 
+        /// <summary>
+        /// 단가·틱당 산출처럼 소수가 의미 있는 값. 1000 미만은 소수 둘째 자리까지(8.64), 이상은 <see cref="FormatWithUnits(double)"/>.
+        /// </summary>
+        public static string FormatDecimalWithUnits(this double number)
+        {
+            return number < 1000 ? number.ToString("0.##") : FormatWithUnits(number);
+        }
+
         public static string FormatWithUnits(this double number)
         {
             if (number < 1000)
