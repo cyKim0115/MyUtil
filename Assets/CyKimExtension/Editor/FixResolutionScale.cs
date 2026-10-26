@@ -23,9 +23,9 @@ public static class FixResolutionScale
         Type gameViewType = GetGameViewType();
         EditorWindow gameViewWindow = GetGameViewWindow(gameViewType);
   
+        // Game View 창이 닫혀 있거나 아직 안 만들어졌으면(에디터 시작 직후·자동화 중) 맞출 대상이 없다.
         if (gameViewWindow == null)
         {
-            Debug.LogError("GameView is null!");
             return;
         }
  
