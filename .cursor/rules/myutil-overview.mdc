@@ -18,3 +18,4 @@ alwaysApply: true
 - `.meta`는 만들지 않는다 (`.cursor/rules/unity-assets.mdc`).
 - Editor 자동화는 CLI batchmode 대신 Unity Skills / MCP (`.cursor/rules/unity-editor-agent-workflow.mdc`).
 - 다른 Unity 프로젝트에서 범용 자산 가져오기 → 스킬 `project-workflows/sync-from-source` (`최신화`, 경로는 루트 `.env`).
+- 룰·스킬 정본은 `.cursor/`다. Claude Code용 진입점 `CLAUDE.md`는 이 룰들을 `@`로 불러오기만 한다. 룰을 고치면 `CLAUDE.md`의 목록도 맞춘다.
