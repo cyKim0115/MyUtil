@@ -19,11 +19,13 @@ Always-applied rule: `.cursor/rules/korean-git-commit.mdc`
 
 - Write the subject in Korean.
 - Keep the first line focused on the user-visible or architectural reason for the change.
-- Pick a clear area label such as `유틸`, `에디터`, `UI`, `문서`, `패키지`, `룰`, `스킬`.
+- Pick a clear area label such as `유틸`, `에디터`, `UI`, `문서`, `패키지`, `룰`, `스킬`, `서브모듈`.
 - Prefer one concise subject line. Add a body only when extra context is helpful.
 - Use a terse noun/verb-phrase tone. End with compact labels such as `구현`, `반영`, `정리`, `추가`, `수정`.
 - Do **not** use sentence-style endings like `~한다`, `~합니다`, `~됩니다`.
-- Do **not** copy older sentence-style commits from `git log`; follow this rule even when recent history is inconsistent.
+- Do **not** use Conventional Commit prefixes (`feat:`, `fix:`, `docs:` …). The area label replaces them.
+- Do **not** write English-only subjects. Proper nouns, APIs, and file names may stay in English.
+- Do **not** copy older sentence-style or prefixed commits from `git log`; follow this rule even when recent history is inconsistent.
 
 ## Safety protocol
 
@@ -76,6 +78,7 @@ Good:
 
 Bad:
 - `PlatformUtil 빌드 타입 판별을 추가하고 Favorite Prefab을 정리한다.`
+- `feat: PlatformUtil 빌드 타입 판별 추가`
 - `Add build type check`
 - `WIP`
 
@@ -86,5 +89,5 @@ Bad:
 3. If a local hard-excluded path changed, confirm the user explicitly asked to include it; otherwise leave it unstaged.
 4. Pick one area label for the main change.
 5. Describe why the change exists, not just the edited symbols.
-6. Reject the message if it ends with `한다`, `합니다`, or `됩니다`.
+6. Reject the message if it ends with `한다`, `합니다`, or `됩니다`, starts with a `feat:`-style prefix, or is English-only.
 7. If `+커푸`, push after a successful commit.
