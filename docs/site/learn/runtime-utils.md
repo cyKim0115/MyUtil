@@ -34,6 +34,7 @@ parent.GetTransformIncludeAllChild(ref allChildren);
 
 ```csharp
 string text = 1500f.FormatWithUnits(); // "1.5a"
+string rate = 8.6421.FormatDecimalWithUnits(); // "8.64" (1000 이상은 FormatWithUnits)
 double value = "1.5a".GetUnitValue();
 string time = 3661L.FormatTime(); // "1h 1m"
 bool hit = 30f.ProbabilitySimulate_Percent();
@@ -51,15 +52,37 @@ if (GameStateUtil.IsSafeToAccess) { /* 안전한 접근 */ }
 
 | 타입 | 용도 |
 |------|------|
-| `UILayoutUtil` (`LayoutUtil`) | LayoutGroup/ContentSizeFitter를 하위부터 순차 Rebuild |
+| `UILayoutUtil` (`LayoutUtil`) | LayoutGroup/ContentSizeFitter를 하위부터 순차 Rebuild, 줄 높이 고정(`SetPreferredHeight`) |
 | `ProgressBarUtil` | Image fillAmount 애니메이션 (LitMotion + UniTask) |
 | `ScrollRectUtil` | ScrollRect 정규화 위치 스크롤 |
+| `UguiFactory` | 프리팹 없이 코드로 uGUI 세우기 (캔버스·EventSystem·Rect·Image·Text·Button·Layout) |
+| `SafeArea` | `Screen.safeArea`에 맞춰 패널 앵커 조정, 초광폭 화면 비율 상한(`_maxAspect`) |
 
 ```csharp
 transform.RebuildLayoutsFromBottom();
+row.SetPreferredHeight(96f);
 img.SetProgressWithAnimation(0.8f, 0.5f);
 await scrollRect.ScrollToBottomAsync(0.3f, token);
 ```
+
+{% hint style="info" %}
+`SetPreferredHeight`는 `flexibleHeight`를 0으로 같이 눌러 둡니다. `childForceExpandHeight`가 켜진 HorizontalLayoutGroup은 자기 flexibleHeight를 1로 보고해서, 그냥 두면 그 줄이 부모의 남는 세로 공간을 전부 가져갑니다.
+{% endhint %}
+
+## UguiFactory
+
+개발용 하네스나 런타임에 개수가 정해지는 목록처럼 프리팹 없이 UI를 세울 때 씁니다. 글자는 레거시 `Text`라 TMP 폰트 에셋 없이 바로 그려집니다. 폰트는 `UguiFactory.DefaultFont`(기본 내장 LegacyRuntime.ttf)를 바꾸거나 인자로 넘깁니다.
+
+```csharp
+var canvas = UguiFactory.CreateCanvas("Dev Canvas", new Vector2(1080f, 1920f));
+UguiFactory.EnsureEventSystem(); // Input System이면 InputSystemUIInputModule
+var column = UguiFactory.CreateVerticalGroup("Column", canvas.transform, 12f);
+UguiFactory.CreateButton("시작", column.transform, Color.gray, Color.white, 36, OnClickStart);
+```
+
+## PerfStatsLogger
+
+개발 빌드에서 1초마다 FPS·CPU/GPU 시간·드로우콜·메모리·프레임 시간 분포를 `[PerfStats]` 한 줄 로그로 남깁니다(Android는 logcat). Scripting Define Symbols에 `CYKIM_PERF_STATS`를 넣은 개발 빌드에서만 컴파일되고 스스로 만들어집니다. GPU·스레드 시간은 Player Settings의 Frame Timing Stats를 켜야 0이 아닙니다.
 
 ## LanguageUtil
 

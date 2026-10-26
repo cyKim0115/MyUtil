@@ -18,6 +18,7 @@ icon: wand-magic-sparkles
 | `korean-git-commit` | 커밋 메시지 작성 | 「커밋해줘」 |
 | `editor-tool-doc-writing` | 에디터 도구 사용 가이드 MD 작성 | 새 Tools 창 문서화 |
 | `agent-editor-tools` | Agent 전용 Editor 도구 추가·호출 | 일회성 셋업/재생성 |
+| `unity-recorder` | Game View 영상·PNG 시퀀스·목표 해상도 정지컷 | 「녹화해줘」, 「1080×1920으로 한 장」 |
 | `sync-from-source` | 다른 Unity 프로젝트에서 범용 자산 동기화 | `최신화` |
 | `particle-effect-controller` | 멀티 이미터 FX 루트 컨트롤러 | 부모 Stop이 자식을 끄는지 |
 
@@ -63,13 +64,16 @@ Agent가 **가끔** 돌리는 Editor 일회성 도구의 작성·호출 패턴�
 매체 판단(text / screenshot / recording)과 전송이 모두 그쪽에 있습니다.
 
 옛 방식은 Unity Editor가 떠 있어야만 동작해서 헤드리스 워커나 Editor가 닫힌
-세션에서는 보고가 통째로 죽었습니다. 지금은 python3 스크립트 하나로 Unity와
+세션에서는 보고가 통째로 죽었습니다. 지금은 파이썬 스크립트 하나로 Unity와
 무관하게 전송됩니다. C# 허브 `WebhookFeedback`은 라이브러리 자산으로 남아
 있습니다 — 개념·API 요약은 [에디터 도구](editor-tools.md)를 보세요.
 
 ### unity-recorder
 
-Play Mode Game View를 MP4 / PNG 시퀀스로 녹화합니다 (`AgentUnityRecorder`, `Recordings/`).
+Play Mode Game View를 MP4 / PNG 시퀀스로 녹화하고, 스크린샷 1장은 `CaptureStill`로 목표 해상도 그대로 찍습니다 (`AgentUnityRecorder`, `Recordings/`).
+
+- 짧은 클립(대략 15초 이하)은 60fps로 찍습니다. 헬퍼 기본값은 30입니다.
+- `ScreenCapture`는 Game View 창 크기 그대로라 작은 창에서는 잘립니다. 해상도 증거는 `CaptureStill`로 남깁니다.
 
 ### particle-effect-controller
 
@@ -92,9 +96,9 @@ Play Mode Game View를 MP4 / PNG 시퀀스로 녹화합니다 (`AgentUnityRecord
 | 규칙 파일 | 요지 |
 |-----------|------|
 | `myutil-overview.mdc` | 라이브러리 범위·작업 원칙 |
-| `unity-assets.mdc` | `.meta` 생성·수정 금지 |
-| `unity-editor-agent-workflow.mdc` | CLI `-batchmode` 금지, MCP/Skills 사용 |
-| `unity-agent-editor-tools.mdc` | Agent 전용 MenuItem 비활성 패턴 |
+| `unity-assets.mdc` | `.meta` 생성·수정·삭제 금지 |
+| `unity-editor-agent-workflow.mdc` | CLI `-batchmode` 금지, MCP/Skills 사용, 에디터 자동화 함정 |
+| `unity-agent-editor-tools.mdc` | Agent 전용 MenuItem 비활성 패턴, MCP 함정 |
 | `korean-git-commit.mdc` | 한국어 커밋 형식 |
 | `unity-csharp-conventions.mdc` | C# 코딩·성능 컨벤션 |
 
@@ -107,7 +111,7 @@ flowchart TB
   subgraph ondemand [필요할 때 skills]
     S1[korean-git-commit]
     S2[sync-from-source]
-    S3[webhook / agent-editor / editor-doc]
+    S3[recorder / agent-editor / editor-doc]
   end
   always --> Agent[Cursor Agent]
   ondemand --> Agent

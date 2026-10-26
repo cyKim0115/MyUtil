@@ -7,9 +7,15 @@ icon: download
 
 {% stepper %}
 {% step %}
+### 서브모듈까지 받기
+
+`Assets/CyKimExtension/Editor/Animation`(AnimationClip 경로 치환 도구)은 별도 저장소를 서브모듈로 넣은 것입니다. `git clone --recurse-submodules`로 받거나, 이미 받았다면 `git submodule update --init`을 실행합니다.
+{% endstep %}
+
+{% step %}
 ### CyKimExtension 복사
 
-이 저장소의 `Assets/CyKimExtension/` 폴더를 대상 Unity 프로젝트의 `Assets/` 아래로 복사합니다.
+이 저장소의 `Assets/CyKimExtension/` 폴더를 대상 Unity 프로젝트의 `Assets/` 아래로 복사합니다. 서브모듈 안의 `.git` 파일(`Editor/Animation/.git`)은 빼고 복사합니다. 그대로 두면 대상 저장소가 그 폴더를 별도 저장소로 착각합니다.
 
 {% hint style="warning" %}
 `.meta` 파일은 Unity가 임포트 시 자동 생성합니다. 수동으로 만들지 마세요.
@@ -19,7 +25,7 @@ icon: download
 {% step %}
 ### Unity 버전·패키지 확인
 
-- **Unity 2022.3 이상** 권장
+- **Unity 6** (6000.4.12f1에서 개발·확인). `EntityId`·`GetEntityId()`를 써서 Unity 2022.3에서는 컴파일되지 않습니다
 - 프로젝트에 **URP**, **Input System**, **TextMeshPro**(`com.unity.ugui`)가 있어야 합니다
 {% endstep %}
 

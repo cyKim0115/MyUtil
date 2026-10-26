@@ -42,7 +42,7 @@ Unity 개발에서 반복되는 유틸리티, Inspector Attribute, 에디터 도
     </tr>
     <tr>
       <td><strong>Cursor 스킬</strong></td>
-      <td>커밋·최신화·웹훅·Agent Editor 등 워크플로</td>
+      <td>커밋·최신화·녹화·Agent Editor 등 워크플로</td>
       <td><a href="learn/cursor-skills.md">cursor-skills.md</a></td>
     </tr>
   </tbody>

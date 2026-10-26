@@ -16,7 +16,7 @@ flowchart LR
   end
   subgraph consumer [다른 Unity 프로젝트]
     Assets[Assets에 복사]
-    Agent[Cursor Agent 워크플로]
+    Agent[Cursor · Claude Code 워크플로]
   end
   Ext --> Assets
   Cursor --> Agent
@@ -28,7 +28,8 @@ flowchart LR
 | 경로 | 역할 | 공개 GitBook |
 |------|------|--------------|
 | `Assets/CyKimExtension/` | 런타임·에디터 C# | 개념·예제만 |
-| `.cursor/rules/`, `.cursor/skills/` | Agent 규칙·스킬 | 원문 비공개 — [카탈로그](cursor-skills.md)에서 개념만 |
+| `.cursor/rules/`, `.cursor/skills/` | Agent 규칙·스킬 (정본) | 원문 비공개 — [카탈로그](cursor-skills.md)에서 개념만 |
+| `CLAUDE.md` | Claude Code 진입점. `.cursor` 룰을 불러오고 스킬 위치를 안내 | 원문 비공개 |
 | `docs/site/` | 사람용 문서 (이 사이트) | Git Sync 대상 |
 | `Secrets/` | 웹훅 URL 등 (gitignore) | 문서화만, 값 비공개 |
 | `Recordings/` | Recorder 출력 (gitignore, Assets 밖) | 커밋하지 않음 |

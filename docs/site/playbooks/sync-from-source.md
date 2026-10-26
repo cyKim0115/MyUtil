@@ -16,7 +16,7 @@ icon: arrows-rotate
 |------|------|
 | `SYNC_SOURCE_ROOT` | 가져올 Unity 프로젝트 루트(절대 경로) |
 | `SYNC_SOURCE_SCRIPTS_REL` | 소스 안 유틸 스크립트 상대 경로 |
-| `SYNC_SOURCE_CURSOR_REL` | 소스 `.cursor` 상대 경로 (기본 `.cursor`) |
+| `SYNC_SOURCE_AGENT_REL` | 소스의 룰·스킬 정본 폴더 상대 경로 (기본 `.claude`. 소스의 `.cursor`는 여기서 생성된 사본) |
 | `SYNC_SOURCE_EXTRA_DRAWER_REL` | (선택) Dictionary Drawer 추가 경로 |
 
 {% hint style="warning" %}
@@ -45,7 +45,13 @@ flowchart TD
 {% step %}
 ### 후보 검토
 
-manifest에 없는 새 파일은 자동 추가하지 않고 **후보**로 보여 줍니다. 범용인지 확인한 뒤 반영합니다.
+manifest에 없는 새 파일은 자동 추가하지 않고 **후보**로 보여 줍니다. 범용인지 확인한 뒤 반영합니다. 이 라이브러리가 앞서 고친 파일과 다른 프로젝트에서 가져온 파일은 manifest에 따로 적혀 있고, 소스 사본으로 되돌리지 않습니다.
+{% endstep %}
+
+{% step %}
+### (요청 시) 관여 레포 전체로 넓히기
+
+「관여하는 레포 전체를 봐줘」처럼 요청하면 소스 프로젝트 밖으로 넓힙니다. 내 커밋이 있는 레포만 고르고, Unity 프로젝트와 룰·스킬 팩을 같은 기준으로 훑은 뒤 계획표로 먼저 보여 줍니다.
 {% endstep %}
 
 {% step %}
