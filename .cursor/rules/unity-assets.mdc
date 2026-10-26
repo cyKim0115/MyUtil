@@ -1,5 +1,5 @@
 ---
-description: Unity 에셋 관련 규칙 — .meta 파일 생성 금지
+description: Unity 에셋 관련 규칙 — .meta 파일 생성·수정·삭제 금지
 alwaysApply: true
 ---
 
@@ -10,3 +10,8 @@ alwaysApply: true
 - AI는 `.meta` 파일을 **절대 생성·수정하지 않음**
 - Unity가 에셋 임포트 시 자동으로 `.meta` 생성
 - 새 스크립트, 프리팹, 텍스처 등을 추가할 때 `.meta` 파일을 함께 만들지 말 것
+
+## .meta 파일 삭제 금지
+
+- 이미 있는 `.meta`를 디스크에서 지우지 않는다. GUID가 새로 생겨 그 에셋을 가리키던 참조가 모두 끊긴다 (폴더 `.meta` 하나를 지워 컴파일 오류가 700개 넘게 난 적이 있다).
+- git 추적에서만 빼려면 `git rm --cached <경로>`를 쓰고 파일은 그대로 둔다.

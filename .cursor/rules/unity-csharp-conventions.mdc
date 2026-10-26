@@ -55,6 +55,6 @@ alwaysApply: false
 
 ## 성능
 
-- `FindObjectOfType` 사용 금지 → `ManagerBase.Instance` 등 싱글톤 사용
+- `FindObjectOfType` 사용 금지 → 직렬화 참조나 사용하는 프로젝트의 싱글톤·서비스 접근을 쓴다
 - 리플렉션 사용 금지
 - Update에서 무거운 연산 금지

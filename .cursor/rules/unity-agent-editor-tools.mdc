@@ -36,9 +36,20 @@ private static bool ValidateRun() => false; // Agent 전용
 | 클래스 | 메서드 |
 |---|---|
 | `AgentEditorDialogGuard` | `PrepareSave` / `PrepareDiscard` (씬·프리팹 dirty 정리, 모달 팝업 예방) |
-| `WebhookFeedback` | `Send` / `SendText` / `SendRecording` / `ClearScreenshotsFolder` |
-| `AgentUnityRecorder` | `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` |
+| `AgentUnityRecorder` | `StartMovie` / `StartImageSequence` / `CaptureStill` / `Stop` / `GetStatus` |
 | `AgentSceneDirtyBeacon` | 호출 없음(`[InitializeOnLoad]`). 열린 씬·Prefab Stage의 dirty 상태를 `Temp/AgentSceneDirty.json`에 적어 둔다. 아래 `unity-modal.py`가 읽는다 |
+| `MaterialKeywordRepair` | 자동(셰이더 임포트 뒤·Play 직전). 키워드가 빠져 보이는 머티리얼이 있으면 `Repair()` |
+| `RendererFeatureActiveStateGuard` | 자동(Edit 복귀·빌드 직전). URP 렌더러 피처가 꺼진 채 남았으면 `RestoreFromDisk()` |
+
+`WebhookFeedback`(`Tools/Agent/Webhook/...`)은 사람이 Unity 안에서 직접 부르는 API다. 에이전트의 텍스트·스크린샷·녹화 보고는 전역 스킬 `webhook-report`로 셸에서 보낸다. `execute_code`로 `WebhookFeedback.SendText` 등을 부르지 않는다(Unity MCP가 끊기면 보고까지 막힌다).
+
+## MCP 함정
+
+- UnityMCP `execute_code`는 메서드 본문만 받는다. 클래스 선언(예: `EditorWindow` 하위 클래스)이 필요하면 전체 코드를 받는 서버 도구(예: ai-game-developer `script-execute`)를 쓴다.
+- 쓰려는 도구가 목록에 없으면 서버의 도구 그룹·커스텀 도구 등록부터 확인한다. MCP는 세션 시작 때만 연결을 맺으니 등록을 고쳤으면 세션을 새로 연다.
+- UnityMCP 포트는 에디터 재시작·도메인 리로드마다 바뀐다. 포트를 문서·설정에 적지 말고 `python Assets/CyKimExtension/Editor/Agent/Tools~/unity-mcp-endpoint.py`로 확인한다.
+- 에디터 창 캡처에 `HostView.GrabPixels`(리플렉션)를 쓰지 않는다. D3D12 에디터가 바로 크래시하고, 끊긴 `execute_code`를 서버가 다시 보내 열자마자 또 크래시한다. 그때는 MCP 서버 프로세스를 모두 끈 뒤 Unity를 연다.
+- 선택 변경·`EditorWindow.SendEvent` 결과는 같은 호출 안에서 읽으면 한 박자 늦다. 다음 호출에서 읽는다.
 
 ## MCP가 전부 타임아웃일 때 — 네이티브 모달
 
