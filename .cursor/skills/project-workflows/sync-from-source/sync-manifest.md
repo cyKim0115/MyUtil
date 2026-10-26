@@ -11,8 +11,10 @@ Paths come from repo-root `.env` (see `.env.example`). Do not put absolute paths
 | Source repo | `SYNC_SOURCE_ROOT` |
 | Source scripts | `SYNC_SOURCE_ROOT` + `SYNC_SOURCE_SCRIPTS_REL` |
 | Dest scripts | `Assets/CyKimExtension/` (this repo) |
-| Source cursor | `SYNC_SOURCE_ROOT` + `SYNC_SOURCE_CURSOR_REL` |
+| Source agent config (룰·스킬 정본) | `SYNC_SOURCE_ROOT` + `SYNC_SOURCE_AGENT_REL` (기본 `.claude`) |
 | Dest cursor | `.cursor/` (this repo) |
+
+Note: 소스의 룰·스킬 정본은 2026-10-01부터 `.claude/`다. 소스의 `.cursor/rules|skills`는 그 사본을 생성한 것이니 비교 기준으로 쓰지 않는다. 소스는 2026-09-18부터 `.claude/`·`.cursor/`·`CLAUDE.md`를 git에서 제외하므로 git 이력이 아니라 **디스크 파일**과 비교한다.
 
 ## Scripts (runtime / editor)
 
@@ -50,22 +52,35 @@ Map: relative to source util root → relative to `CyKimExtension`.
 | `Editor/InspectorComponentShortcut.cs` | `Editor/InspectorComponentShortcut.cs` |
 | `Editor/AgentEditorDialogGuard.cs` | `Editor/AgentEditorDialogGuard.cs` |
 | `Editor/AgentSceneDirtyBeacon.cs` | `Editor/AgentSceneDirtyBeacon.cs` |
+| `PerfStatsLogger.cs` | `PerfStatsLogger.cs` |
 
 ### Extra tracked (relative to `SYNC_SOURCE_ROOT`, not util scripts root)
 
 | Source | Dest |
 |--------|------|
-| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedback.cs` | `Editor/Agent/Webhook/WebhookFeedback.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackSettings.cs` | `Editor/Agent/Webhook/WebhookFeedbackSettings.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackProvider.cs` | `Editor/Agent/Webhook/WebhookFeedbackProvider.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackJson.cs` | `Editor/Agent/Webhook/WebhookFeedbackJson.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/WebhookFeedbackMime.cs` | `Editor/Agent/Webhook/WebhookFeedbackMime.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` | `Editor/Agent/Webhook/IWebhookFeedbackTransport.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/DiscordWebhookTransport.cs` | `Editor/Agent/Webhook/DiscordWebhookTransport.cs` |
-| `Assets/GameResource/Script/Editor/Agent/Webhook/SlackWebhookTransport.cs` | `Editor/Agent/Webhook/SlackWebhookTransport.cs` |
 | `Assets/GameResource/Script/Editor/AgentUnityRecorder.cs` | `Editor/Agent/AgentUnityRecorder.cs` |
 | `Assets/GameResource/Script/Editor/EditorPlayModeRunInBackground.cs` | `Editor/EditorPlayModeRunInBackground.cs` |
+| `Assets/GameResource/Script/Editor/RendererFeatureActiveStateGuard.cs` | `Editor/RendererFeatureActiveStateGuard.cs` |
+| `Assets/GameResource/Script/UI/Common/SafeArea.cs` | `SafeArea.cs` |
 | `.claude/tools/unity-modal.py` | `Editor/Agent/Tools~/unity-modal.py` |
+
+### MyUtil이 앞선 부분 (소스 사본으로 되돌리지 않는다)
+
+| Dest | MyUtil 쪽 차이 |
+|------|----------------|
+| `PerfStatsLogger.cs` | `#if`에 `CYKIM_PERF_STATS`를 더해 opt-in으로 바꿨다. 라이브러리를 넣은 모든 개발 빌드에서 저절로 돌지 않게 하려는 것이다 |
+| `SafeArea.cs` | 비율 상한 `_maxAspect`를 넣었다. 소스 master에 없더라도 지우지 않는다 |
+| `Editor/EditorPlayModeRunInBackground.cs` | Play 전 값을 SessionState에 적어 두고 Edit 복귀 때 되돌린다. 에디터에서 `Application.runInBackground`는 Player Settings와 같은 칸이라, 켠 채 두면 `ProjectSettings.asset`에 저장된다 |
+| `Editor/Agent/AgentUnityRecorder.cs` | `CaptureStill`(지정 해상도 정지컷)을 추가했고, `StartImageSequence`의 `OutputFile`에 `<Frame>` 와일드카드를 붙였다. 없으면 모든 프레임이 한 파일에 덮어써진다 |
+| `UILayoutUtil.cs` | `SetPreferredHeight` 추가(가산) |
+| `Editor/FixResolutionScale.cs` | Game View가 없으면 로그 없이 반환한다(소스는 `LogError`를 주석 처리). 동작은 같다 |
+
+### MyUtil 단독 (소스에서 가져오지 않음)
+
+| Dest | 사유 |
+|------|------|
+| `Editor/Agent/Webhook/*` (8개) | 소스는 2026-09-08에 지웠다(에이전트 보고는 전역 `webhook-report`). MyUtil은 사람이 Unity 안에서 부르는 C# API로 남긴다 |
+| `Editor/MaterialKeywordRepair.cs`, `UguiFactory.cs`, `Editor/Agent/Tools~/unity-mcp-endpoint.py` | 다른 프로젝트에서 가져와 MyUtil이 정본이다. 소스에 같은 이름의 사본(예: `.claude/tools/unity-mcp-endpoint.py`)이 있어도 덮어쓰지 않는다 |
 
 Note: When syncing `AgentUnityRecorder`, **strip game-coupled APIs** (e.g. map pan / project camera controllers). Keep `StartMovie` / `StartImageSequence` / `Stop` / `GetStatus` only.
 
@@ -96,19 +111,28 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 - `Editor/AddressableUnusedEntrySweeper.cs` (소스 테이블 캐시·스크립트 경로와 문자열 주소 규칙에 묶임. 일반화하려면 경로·토큰 수집을 설정으로 빼야 함)
 - `Editor/FloorBlockScatterUtility.cs`, 소스 `RandomPrefabScatterWindow`의 바닥 머티리얼 모드 (도메인 바닥 블록 파이프라인. 프리팹 스캐터만 유지)
 - 소스 `Editor/Agent/AgentCaptureRun.cs` (원격 워커 잡 계약·프로젝트 씬에 묶임)
+- 소스 `Editor/UIInspectionCatalog.cs`, `Editor/UIInspectionWindow.cs` (팝업 베이스·테이블·유저 데이터 캐시에 묶임)
+- 소스 `Editor/Sound/**` (사운드 ID·사운드 루트·Addressables 등록 규칙에 묶임)
+- 소스 `Editor/AiGameDeveloperMcpSafeDefault.cs`, `Editor/Agent/AgentReleaseBuildIsolation*.cs` (ai-game-developer 패키지 전제. MyUtil에는 그 패키지가 없다)
 - Anything under Blender / Island / Building / character-domain folders outside util
+
+### 보류 후보 (다음 최신화 때 다시 본다)
+
+- 소스 `Editor/Tuning/**`: 탭·프리셋·자동 저장·Undo·Play 중 즉시 반영되는 값 편집창 추상 틀(약 1.3천 줄). 게임 타입 참조는 없다. 2026-10-22에 생겼고 쓰는 곳이 하나뿐이라 쓰임이 더 쌓이면 가져온다(예제 탭·프리셋 SO 문서화 필요).
 
 ## Cursor rules
 
 ### Portable (compare; strip source-project-specific examples)
 
+소스 룰은 `.claude/rules/<이름>.md`(정본)이고, 이 저장소 룰은 `.cursor/rules/<이름>.mdc`다. 본문만 비교하고 이 저장소의 frontmatter(`description`·`globs`·`alwaysApply`)는 유지한다.
+
 | Source rule | Dest rule | Notes |
 |-------------|-----------|-------|
-| `unity-assets.mdc` | `unity-assets.mdc` | Drop toon/Blender material sections |
-| `unity-editor-agent-workflow.mdc` | `unity-editor-agent-workflow.mdc` | Drop spreadsheet-only rows |
-| `unity-agent-editor-tools.mdc` | `unity-agent-editor-tools.mdc` | Use generic examples |
-| `unity-csharp-conventions.mdc` | `unity-csharp-conventions.mdc` | Globs → `Assets/CyKimExtension/**/*.cs`; drop game Manager singletons |
-| `korean-git-commit.mdc` | `korean-git-commit.mdc` | Keep this repo’s area labels (`유틸`, `에디터`, …) |
+| `.claude/rules/unity-assets.md` | `unity-assets.mdc` | Drop toon/Blender material sections |
+| `.claude/rules/unity-editor-agent-workflow.md` | `unity-editor-agent-workflow.mdc` | Drop spreadsheet-only rows. 「에디터 자동화 함정」 절은 이 저장소에서 더한 것이라 유지 |
+| `.claude/rules/unity-agent-editor-tools.md` | `unity-agent-editor-tools.mdc` | Use generic examples. 「MCP 함정」 절은 유지 |
+| `.claude/rules/unity-csharp-conventions.md` | `unity-csharp-conventions.mdc` | Globs → `Assets/CyKimExtension/**/*.cs`; drop game Manager singletons |
+| `git-workflow` 팩 `cursor/rules/korean-git-commit.mdc` | `korean-git-commit.mdc` | 정본은 소스가 아니라 팩이다(소스의 `.cursor/git-workflow/` 사본은 낡을 수 있다). Keep this repo’s area labels (`유틸`, `에디터`, …) |
 
 ### This-repo only (never overwrite from source)
 
@@ -125,12 +149,14 @@ Note: If `SerializableDictionaryDrawer` lives outside the util Editor folder, us
 
 ### Portable
 
+소스 스킬은 `.claude/skills/project-workflows/<이름>/`(정본)이다.
+
 | Source | Dest | Notes |
 |--------|------|-------|
 | `project-workflows/agent-editor-tools/` | same | Generic examples only |
 | `project-workflows/editor-tool-doc-writing/` | same | If present and general |
-| `project-workflows/korean-git-commit/` | same | Keep this repo’s labels/examples |
-| `project-workflows/unity-recorder/` | same | Path → `AgentUnityRecorder`; drop game ForceEnter / map-pan examples |
+| `git-workflow` 팩 `skills/project-workflows/korean-git-commit/` | same | 정본은 팩. Keep this repo’s labels/examples |
+| `project-workflows/unity-recorder/` | same | Path → `AgentUnityRecorder`; drop game ForceEnter / map-pan examples. `CaptureStill` 절은 MyUtil 단독이라 유지 |
 | `project-workflows/particle-effect-controller/` | same | MyUtil 우선. 소스에 없으면 유지만 하고 삭제하지 않음 |
 
 ### This-repo only

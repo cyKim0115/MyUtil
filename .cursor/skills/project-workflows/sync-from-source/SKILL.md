@@ -19,7 +19,7 @@ Configured **source** project에서 **범용** 유틸·룰·스킬만 이 저장
 |----------|---------|
 | `SYNC_SOURCE_ROOT` | Absolute path to source Unity project root |
 | `SYNC_SOURCE_SCRIPTS_REL` | Relative path to util scripts folder under source |
-| `SYNC_SOURCE_CURSOR_REL` | Relative path to source `.cursor` (default `.cursor`) |
+| `SYNC_SOURCE_AGENT_REL` | Relative path to the source's canonical rules/skills folder (default `.claude`; the source's `.cursor` is generated from it) |
 | `SYNC_SOURCE_EXTRA_DRAWER_REL` | Optional extra path for dictionary drawer |
 
 3. If `SYNC_SOURCE_ROOT` or `SYNC_SOURCE_SCRIPTS_REL` is empty → **stop** and ask the user to fill `.env`.
@@ -37,8 +37,19 @@ Configured **source** project에서 **범용** 유틸·룰·스킬만 이 저장
 ### 1. Diff candidates
 
 - Compare each **scripts** / **rules** / **skills** entry in the manifest (source → dest).
-- Scan source util tree and source `.cursor/rules|skills` for **new** files not listed.
+- Scan source util tree and source `<SYNC_SOURCE_AGENT_REL>/rules|skills|tools` for **new** files not listed.
   - New file → apply include heuristics; if unsure, list under “후보” and do not auto-add.
+- 소스의 룰·스킬 폴더는 git에서 제외돼 있으니 git 이력이 아니라 디스크 파일과 비교한다.
+- 매니페스트의 「MyUtil이 앞선 부분」「MyUtil 단독」 표에 있는 파일은 소스 사본으로 되돌리지 않는다.
+
+### 확장 스캔 (사용자가 요청할 때만)
+
+사용자가 「관여하는 레포 전체」를 보라고 하면 소스 프로젝트 밖으로 넓힌다.
+
+1. 저장소들이 모인 부모 폴더에서 사용자 커밋이 있는 레포만 고른다(git author 기준). 남의 레포 클론·참고용 사본은 뺀다.
+2. Unity 프로젝트와 룰·스킬 팩 위주로 같은 Include heuristics를 적용한다. 앱·웹 레포는 목록만 보고 넘긴다.
+3. 결과는 바로 반영하지 않고 계획표로 먼저 보여 준다. 다른 프로젝트에서 가져온 자산은 매니페스트 「MyUtil 단독」에 적는다.
+4. 다른 사람 소유 레포의 코드는 사용자가 직접 쓴 부분만 후보로 올린다.
 
 ### 2. Apply updates
 
