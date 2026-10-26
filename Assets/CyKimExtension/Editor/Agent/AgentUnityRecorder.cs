@@ -13,6 +13,7 @@ using UnityEngine;
 /// Output defaults to project-root Recordings/ (gitignored). Requires Play Mode for Game View capture.
 /// 저해상도/커스텀 해상도 녹화 시 Game View selectedSizeIndex를 저장했다가 Stop/자동종료 때 원복한다.
 /// MP4 녹화가 끝나면 ffmpeg faststart 리먹스를 자동 실행한다 (ffmpeg가 없으면 원본 유지).
+/// CaptureStill은 Game View 창 크기와 무관하게 지정 해상도로 한 장을 찍는다 (ScreenCapture는 창 크기 그대로라 작은 창에서 잘린다).
 /// </summary>
 public static class AgentUnityRecorder
 {
@@ -163,7 +164,8 @@ public static class AgentUnityRecorder
         image.name = "AgentImageRecorder";
         image.Enabled = true;
         image.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
-        image.OutputFile = _pendingPathNoExt;
+        // OutputFile은 Recorder 기본 파일 이름(<Recorder>_<Take>_<Frame>)을 통째로 바꾼다. <Frame>이 없으면 모든 프레임이 한 파일에 덮어써진다.
+        image.OutputFile = _pendingPathNoExt + "_" + DefaultWildcard.Frame;
         image.imageInputSettings = CreateImageInput(width, height, cameraTag);
 
         controllerSettings.AddRecorderSettings(image);
@@ -191,6 +193,64 @@ public static class AgentUnityRecorder
             width,
             height,
             frameRate,
+            string.IsNullOrEmpty(cameraTag) ? "GameView" : $"CameraTag:{cameraTag}");
+    }
+
+    /// <summary>
+    /// PNG 한 장을 지정 해상도로 찍는다. 파일: Recordings/{fileName}.png.
+    /// Recorder가 렌더된 프레임을 받아 쓰므로 바로 돌아와도 파일은 아직 없다. 몇 백 ms 뒤 GetStatus()로 exists=true를 확인한다.
+    /// 해상도가 기본값과 다르면 다른 녹화처럼 끝난 뒤 Game View 사이즈를 원복한다.
+    /// </summary>
+    public static string CaptureStill(
+        string fileName = null,
+        int width = DefaultWidth,
+        int height = DefaultHeight,
+        string cameraTag = null)
+    {
+        if (!EditorApplication.isPlaying)
+            return "error=not_in_play_mode (enter Play Mode before capturing Game View)";
+
+        if (IsRecording())
+            return "error=already_recording (call Stop first)";
+
+        EnsureOutputDirectory();
+        BeginGameViewSizeGuard(width, height);
+
+        var stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var baseName = string.IsNullOrWhiteSpace(fileName) ? $"still_{stamp}" : SanitizeFileName(fileName);
+        _pendingPathNoExt = Path.Combine(DefaultOutputDirectory, baseName);
+
+        var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
+        var image = ScriptableObject.CreateInstance<ImageRecorderSettings>();
+        image.name = "AgentStillRecorder";
+        image.Enabled = true;
+        image.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+        image.CaptureAlpha = false;
+        image.OutputFile = _pendingPathNoExt;
+        image.imageInputSettings = CreateImageInput(width, height, cameraTag);
+
+        controllerSettings.AddRecorderSettings(image);
+        controllerSettings.SetRecordModeToSingleFrame(0);
+        controllerSettings.FrameRate = 30f;
+        // 한 장 때문에 Play를 끄면 다음 캡처마다 다시 켜야 한다.
+        controllerSettings.ExitPlayMode = false;
+
+        _controller = new RecorderController(controllerSettings);
+        _controller.PrepareRecording();
+        _controller.StartRecording();
+        StartWatchRecordingEnd();
+
+        var outputPath = _pendingPathNoExt + ".png";
+        EditorPrefs.SetString(PrefsLastOutput, outputPath);
+        EditorPrefs.SetString(PrefsLastMode, "still");
+
+        return FormatStatus(
+            "started",
+            outputPath,
+            0f,
+            width,
+            height,
+            30f,
             string.IsNullOrEmpty(cameraTag) ? "GameView" : $"CameraTag:{cameraTag}");
     }
 
