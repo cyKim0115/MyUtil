@@ -1,9 +1,10 @@
 ---
 name: unity-recorder
 description: >-
-  Record Unity Game View (or tagged camera) to MP4 / PNG sequence via Unity Recorder
-  and AgentUnityRecorder. Use when the user asks to record, capture video, movie,
-  clip, image sequence, or use Unity Recorder from chat.
+  Record Unity Game View (or tagged camera) to MP4 / PNG sequence / a single PNG still
+  at a fixed resolution via Unity Recorder and AgentUnityRecorder. Use when the user asks
+  to record, capture video, movie, clip, image sequence, a target-resolution screenshot,
+  or use Unity Recorder from chat.
 disable-model-invocation: true
 ---
 
@@ -17,9 +18,10 @@ Play Mode에서 Game View(또는 태그 카메라)를 MP4 / PNG 시퀀스로 녹
 ## When to use
 
 - “녹화해줘”, “MP4로 뽑아줘”, “이미지 시퀀스”, “Unity Recorder로 …”
-- 연출/UI 검증용 짧은 클립이 필요할 때
+- 연출/UI 검증용 짧은 클립이 필요할 때. 짧은 클립(대략 15초 이하)은 **60fps**로 찍는다.
+- 목표 해상도 그대로의 스크린샷 1장이 필요할 때 → `CaptureStill`
 
-스크린샷 1장만이면 이 스킬 대신 Play 중 `ScreenCapture.CaptureScreenshot` 또는 Game View 스크린샷 MCP 도구(예: ai-game-developer `screenshot-game-view`)를 쓰고, 전송은 전역 스킬 `webhook-report`에 맡긴다. 카메라 렌더 기반 캡처(`manage_camera` 등)는 UI 캔버스가 빠질 수 있어 UI 증거로 쓰지 않는다.
+스크린샷 1장은 `AgentUnityRecorder.CaptureStill()`로 찍는다. Game View 창 크기와 무관하게 지정 해상도(기본 1080×1920)로 렌더하므로, 목표 해상도에서만 보이는 레이아웃 문제가 그대로 찍힌다. `ScreenCapture.CaptureScreenshot`은 창 크기 그대로라 작은 창에서는 아래가 잘린 그림이 나온다. 카메라 렌더 기반 캡처(`manage_camera` 등)는 UI 캔버스가 빠질 수 있어 UI 증거로 쓰지 않는다. 전송은 전역 스킬 `webhook-report`에 맡긴다.
 
 ## Defaults
 
@@ -27,7 +29,7 @@ Play Mode에서 Game View(또는 태그 카메라)를 MP4 / PNG 시퀀스로 녹
 |------|--------|
 | 출력 폴더 | 프로젝트 루트 `Recordings/` (gitignored, Assets 밖) |
 | 해상도 | 1080×1920 (세로) |
-| FPS | 30 |
+| FPS | 헬퍼 기본값 30. 짧은 클립(대략 15초 이하)은 `frameRate: 60f`를 넘긴다. 긴 게임플레이 녹화만 30 |
 | 코덱 | MP4 (High). 웹훅 전송 시 Medium 권장 |
 | 소스 | Game View (UI 포함) |
 | 길이 | `durationSeconds` (≤0이면 수동, `Stop` 필요) |
@@ -54,7 +56,7 @@ Unity Recorder는 `moov`(재생 길이·프레임 인덱스)를 파일 **맨 끝
 2. **Play Mode** 진입 — Game View 녹화 전제. `manage_editor(action: "play")`.
 3. `com.unity.recorder` 패키지 설치.
 4. (선택) `ffmpeg`가 PATH에 있으면 종료 후 faststart 리먹스가 자동 실행된다.
-5. 에디터 포커스가 없어도 Play가 진행되도록 Player Settings `Run In Background`를 켜 둔다.
+5. 에디터 포커스가 없어도 Play는 진행된다. `EditorPlayModeRunInBackground`가 Play 동안만 `runInBackground`를 켜고, Edit 복귀 때 원래 값으로 돌린다. Player Settings를 손으로 켤 필요가 없다. 이 스크립트가 없는 프로젝트면 Play 진입 뒤 `execute_code`로 `Application.runInBackground = true;`를 부르고, 끝나면 되돌린다(에디터에서는 이 값이 PlayerSettings와 같은 칸이다).
 
 ## Workflow — timed MP4 (권장)
 
@@ -78,7 +80,7 @@ return AgentUnityRecorder.StartMovie(
     durationSeconds: 8f,
     width: 1080,
     height: 1920,
-    frameRate: 30f,
+    frameRate: 60f, // 짧은 클립은 60. 생략하면 헬퍼 기본값 30이다
     fileName: "verify_clip",
     captureAudio: false,
     cameraTag: null,
@@ -102,8 +104,19 @@ return AgentUnityRecorder.Stop();
 
 ```csharp
 return AgentUnityRecorder.StartImageSequence(5f, fileName: "seq_ui");
-// → Recordings/seq_ui_0001.png ...
+// → Recordings/seq_ui_<프레임 번호 4자리>.png ...
 ```
+
+## Workflow — still (스크린샷 1장)
+
+```csharp
+return AgentUnityRecorder.CaptureStill("title_check");
+// → Recordings/title_check.png (1080×1920). 해상도를 바꾸면 Game View 사이즈는 끝나고 원복된다
+return AgentUnityRecorder.CaptureStill("tablet", width: 2048, height: 1536);
+```
+
+- Play Mode에서만 동작한다. Recorder가 렌더된 프레임을 받아 쓰므로 **호출 직후에는 파일이 아직 없다.** 몇 백 ms 뒤 다음 호출에서 `GetStatus()`의 `exists=true`를 확인한다.
+- 팝업·연출을 연 호출과 같은 호출에서 찍지 않는다. 열림 애니메이션 첫 프레임이 찍힌다. 다음 호출에서 찍는다.
 
 ## Tagged camera
 
@@ -124,15 +137,10 @@ return AgentUnityRecorder.StartMovie(6f, cameraTag: "MainCamera");
 
 ## Webhook
 
-짧은 실패/검증 클립은 **전역 스킬 `webhook-report`**로 보낸다. 매체 판단표도 그쪽에 있다.
+짧은 실패/검증 클립과 정지컷은 **전역 스킬 `webhook-report`**로 보낸다. 매체 판단표도 그쪽에 있다.
 녹화만 이 스킬이 맡고, 전송은 전역 스킬 소관이다 — Unity Editor가 떠 있을 필요가 없다.
 
-```bash
-python3 ~/.claude/skills/webhook-report/send_webhook.py \
-  --key <프로젝트 룰이 지정한 키> \
-  --title "연출 - 검증 클립" --description "설명" \
-  --file Recordings/verify_clip.mp4
-```
+전송 명령은 여기 옮겨 적지 않는다. 채널 키(프로젝트 룰이 지정), `--agent <내 이름>`, OS별 인터프리터(Windows는 `python`), 한글 본문은 `--description-file`로 넘기는 규칙까지 전역 스킬 원문을 그대로 따른다. 첨부는 `--file Recordings/<파일>`이다.
 
 ## Do / Don't
 
@@ -141,15 +149,17 @@ python3 ~/.claude/skills/webhook-report/send_webhook.py \
 | `execute_code` + `AgentUnityRecorder.*` | 비활성 MenuItem에 `execute_menu_item` 의존 |
 | 출력은 `Recordings/` | `Assets/` 안에 대용량 영상 저장 |
 | 완료 후 경로만 안내 | 녹화 파일을 커밋 |
-| 단발 스크린샷은 screenshot 경로 | Recorder로 1프레임만 대체 |
-| 성공 리포트마다 긴 MP4 웹훅 | `webhook-report`의 매체 판단표 위반 |
+| 단발 정지컷은 `CaptureStill` (목표 해상도) | 창 크기 그대로인 `ScreenCapture`를 해상도 증거로 쓰기 |
+| 짧은 클립은 `frameRate: 60f` | 짧은 연출·UI를 기본 30fps로 찍기 |
+| 매체 판단은 `webhook-report` 표 기준 | 성공 리포트마다 긴 MP4 웹훅 |
 | 녹화 중 가림 팝업은 닫고 진행 | 가림 팝업 때문에 녹화를 중단하거나 덮인 채로 방치 |
 
 ## Checklist
 
 - [ ] Play Mode인가
-- [ ] `StartMovie` / `StartImageSequence` 반환에 `error=` 없는가
-- [ ] `duration + buffer` 대기 후 `exists=true`인가
+- [ ] `StartMovie` / `StartImageSequence` / `CaptureStill` 반환에 `error=` 없는가
+- [ ] 짧은 클립이면 `frameRate: 60f`를 넘겼는가 (헬퍼 기본값은 30)
+- [ ] `duration + buffer` 대기 후(정지컷은 다음 호출에서) `exists=true`인가
 - [ ] 사용자에게 **절대 경로** (`Recordings/...`) 안내했는가
 - [ ] 녹화 파일을 스테이징하지 않았는가
 - [ ] 웹 미리보기용이면 faststart 리먹스 로그(완료/실패)를 확인했는가

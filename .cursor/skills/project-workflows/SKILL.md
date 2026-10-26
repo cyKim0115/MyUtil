@@ -13,7 +13,7 @@ Workflow index for this util library (`CyKimExtension`).
 - `korean-git-commit` — Korean commit message format
 - `editor-tool-doc-writing` — Markdown docs for Unity editor tools
 - `agent-editor-tools` — Agent-only Editor tools: disable MenuItem, call via execute_code
-- `unity-recorder` — Game View MP4 / PNG sequence via `AgentUnityRecorder`
+- `unity-recorder` — Game View MP4 / PNG sequence / fixed-resolution still via `AgentUnityRecorder`
 - `sync-from-source` — Sync portable utils/rules/skills from `.env`-configured source (`최신화`)
 - `particle-effect-controller` — Root ParticleSystem (renderer off) as Play/Stop controller for child emitters
 
@@ -24,7 +24,8 @@ Workflow index for this util library (`CyKimExtension`).
 - Unity Editor automation / no CLI batchmode → `.cursor/rules/unity-editor-agent-workflow.mdc`
 - Agent-only one-shot Editor tools → `.cursor/rules/unity-agent-editor-tools.mdc` + `agent-editor-tools`
 - Webhook report (text / screenshot / recording, media choice included) → 전역 스킬 `webhook-report`
-- Game View movie / image sequence → `unity-recorder`
+- Game View movie / image sequence / target-resolution screenshot → `unity-recorder`
+- Unity MCP port / connection check → `python Assets/CyKimExtension/Editor/Agent/Tools~/unity-mcp-endpoint.py` (`.cursor/rules/unity-agent-editor-tools.mdc` 「MCP 함정」)
 - Screenshots folder cleanup → 캡처한 쪽에서 `.png`·`.png.meta`를 함께 지운다 (전용 스킬 없음)
 - `최신화` / sync → `sync-from-source` (+ `sync-manifest.md`, repo-root `.env`)
 - Multi-emitter VFX / parent Stop drives children / renderer-off root ParticleSystem → `particle-effect-controller`
